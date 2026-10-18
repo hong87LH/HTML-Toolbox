@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown预览工具</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <!-- highlight.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" id="hljs-dark-theme" disabled>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
+    <!-- Mermaid.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <!-- 自定义样式 -->
+    <style>
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        /* 懒加载图片 */
+        img[data-src] {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        img.loaded {
+            opacity: 1;
+        }
+        /* 自定义prose样式 */
+        .prose {
+            max-width: none;
+        }
+        .prose img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .prose video {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        
+        /* 深色模式基础设置 */
+        html.dark {
+            background-color: #0f172a;
+            color: #e5e7eb;
+        }
+        
+        html.dark body {
+            background-color: #0f172a;
+            color: #e5e7eb;
+        }
+        
+        html.dark header,
+        html.dark footer,
+        html.dark #drop-zone,
+        html.dark aside > div,
+        html.dark article {
+            background-color: #1e293b !important;
+            color: #e5e7eb !important;
+        }
+        
+        html.dark main {
+            background-color: #0f172a !important;
+        }
+        
+        /* 改善深夜模式下左侧目录悬停时的文字颜色 */
+        html.dark #toc-content a {
+            color: #d1d5db;
+        }
+        
+        html.dark #toc-content a:hover {
+            color: #ffffff !important;
+            background-color: #334155 !important;
+        }
+        
+        /* 标题样式 */
+        .numeric-heading,
+        #markdown-content h3 {
+            font-weight: bold !important;
+        }
+        
+        /* 表格样式优化 */
+        #markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        #markdown-content table th,
+        #markdown-content table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        #markdown-content table th {
+            background-color: #bfbfbf;
+            font-weight: 600;
+        }
+        
+        html.dark #markdown-content table th {
+            background-color: #334155;
+        }
+        
+        html.dark #markdown-content table td,
+        html.dark #markdown-content table th {
+            border-color: #475569;
+        }
+        
+        /* 基础样式设置 */
+        body, main {
+            background-color: #f1f5f9;
+        }
+        
+        /* Markdown内容区域排版优化 */
+        #markdown-content {
+            line-height: 1.5;
+            font-size: 16px;
+        }
+        
+        /* 标题层级间距与排版优化 */
+        #markdown-content h1 {
+            margin-bottom: 1.75rem;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+        }
+        
+        #markdown-content h2 {
+            margin-top: 2.75rem;
+            margin-bottom: 1.3rem;
+            line-height: 1.3;
+        }
+        
+        #markdown-content h3 {
+            margin-top: 1.75rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.2;
+        }
+        
+        #markdown-content h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+        
+        /* 段落间距优化 */
+        #markdown-content p {
+            margin-bottom: 1.25rem;
+            line-height: 1.3 !important;
+        }
+        
+        /* 列表样式统一优化 */
+        #markdown-content ul, 
+        #markdown-content ol,
+        #markdown-content .task-list {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        #markdown-content ul {
+            list-style-type: disc;
+        }
+        
+        #markdown-content ol {
+            list-style-type: decimal;
+        }
+        
+        #markdown-content .task-list {
+            list-style-type: none;
+        }
+        
+        /* 列表项间距优化 */
+        #markdown-content li,
+        #markdown-content .task-list-item {
+            margin-bottom: 0.3rem;
+            line-height: 1.3;
+        }
+        
+        /* 任务列表项样式 */
+        #markdown-content .task-list-item {
+            position: relative;
+            padding-left: 0;
+            display: block;
+            text-indent: 0;
+        }
+        
+        #markdown-content .task-list-item-checkbox {
+            position: absolute;
+            left: -1.5rem;
+            top: 0.15rem;
+            margin: 0;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: middle;
+        }
+        
+        /* 列表内段落样式 */
+        #markdown-content li p,
+        #markdown-content .task-list-item p {
+            margin: 0;
+            display: inline;
+        }
+        
+        #markdown-content li p + p {
+            margin-top: 1rem;
+        }
+        
+        /* 引用块优化 */
+        #markdown-content blockquote {
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #e2e8f0;
+            background-color: #f8fafc;
+            font-style: italic;
+            line-height: 1.3;
+        }
+        
+        html.dark #markdown-content blockquote {
+            border-left-color: #475569;
+            background-color: #1e293b;
+        }
+        
+        /* 代码块优化 */
+        #markdown-content pre {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+        
+        /* 行内代码优化 */
+        #markdown-content code:not(pre code) {
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            background-color: #f1f5f9;
+        }
+        
+        /* 添加代码框宽度控制与文本换行处理 */
+        #markdown-content pre {
+            max-width: 100%;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #markdown-content pre code {
+            display: block;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        html.dark #markdown-content code:not(pre code) {
+            background-color: #334155;
+        }
+        
+        /* 编辑器样式 */
+        #markdown-editor {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        
+        #markdown-editor:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        html.dark #markdown-editor {
+            background-color: #1e293b;
+            color: #e5e7eb;
+            border-color: #475569;
+        }
+        
+        html.dark #markdown-editor:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+        }
+        
+        /* 编辑模式下的工具栏按钮高亮 */
+        .edit-mode-active {
+            background-color: #4f46e5 !important;
+        }
+        
+        /* Markdown编辑工具栏样式 */
+        #editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 8px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-bottom: none;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        html.dark #editor-toolbar {
+            background-color: #334155;
+            border-color: #475569;
+        }
+        
+        .md-tool-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        
+        .md-tool-btn:hover {
+            background-color: #e2e8f0;
+            color: #1e293b;
+        }
+        
+        html.dark .md-tool-btn {
+            color: #94a3b8;
+        }
+        
+        html.dark .md-tool-btn:hover {
+            background-color: #475569;
+            color: #f1f5f9;
+        }
+        
+        .md-tool-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .md-tool-separator {
+            width: 1px;
+            height: 24px;
+            background-color: #e2e8f0;
+            margin: 0 4px;
+        }
+        
+        html.dark .md-tool-separator {
+            background-color: #475569;
+        }
+        
+        /* Mermaid图表样式 */
+        .mermaid {
+            margin: 1.5rem 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        
+        html.dark .mermaid {
+            background-color: #1e293b;
+        }
+        
+        /* 帮助弹窗暗色模式样式 */
+        #help-modal[data-theme="dark"] .bg-white {
+            background-color: #1e293b !important;
+        }
+        
+        #help-modal[data-theme="dark"] .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        
+        #help-modal[data-theme="dark"] .text-gray-700,
+        #help-modal[data-theme="dark"] .text-gray-800,
+        #help-modal[data-theme="dark"] .text-gray-900 {
+            color: #e2e8f0 !important;
+        }
+        
+        #help-modal[data-theme="dark"] .bg-gray-100 {
+            background-color: #334155 !important;
+        }
+        
+        #help-modal[data-theme="dark"] .bg-gray-200 {
+            background-color: #475569 !important;
+        }
+        
+        #help-modal[data-theme="dark"] code {
+            color: #e2e8f0 !important;
+        }
+        
+        /* 编辑模式下的左右布局样式 */
+        #content-main.flex-row {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+        }
+    
+        #content-main.flex-row #editor-container {
+            display: block;
+            width: 50%;
+            transition: width 0.3s ease;
+        }
+    
+        #content-main.flex-row #preview-container {
+            width: 50%;
+            transition: width 0.3s ease;
+        }
+    
+        #content-main.flex-row #markdown-editor {
+            height: calc(100vh - 12rem);
+            resize: none;
+        }
+    
+        #content-main.flex-row #preview-container {
+            max-height: calc(100vh - 8rem);
+            overflow-y: auto;
+        }
+    
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            #content-main.flex-row {
+                flex-direction: column;
+            }
+            
+            #content-main.flex-row #editor-container,
+            #content-main.flex-row #preview-container {
+                width: 100%;
+            }
+            
+            #content-main.flex-row #markdown-editor {
+                height: 50vh;
+            }
+        }
+        
+        /* 打印样式 - 控制打印时只显示预览内容 */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #markdown-content, #markdown-content * {
+                visibility: visible;
+            }
+            #markdown-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 2cm;
+                box-sizing: border-box;
+            }
+            /* 确保代码块在打印时不会被截断 */
+            #markdown-content pre {
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+            /* 确保表格在打印时正确显示 */
+            #markdown-content table {
+                display: table;
+                width: 100%;
+                page-break-inside: auto;
+            }
+            /* 控制分页行为 */
+            #markdown-content h1, #markdown-content h2 {
+                page-break-after: avoid;
+            }
+            #markdown-content img, #markdown-content pre, #markdown-content table {
+                page-break-inside: avoid;
+            }
+        }
+        
+        /* 导出PDF按钮样式 */
+        .btn-export {
+            background-color: #8b5cf6 !important; /* 紫色 */
+            color: white !important;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-export:hover {
+            background-color: #7c3aed !important;
+            transform: translateY(-1px);
+        }
+        
+        html.dark .btn-export {
+            background-color: #8b5cf6 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- 头部导航 -->
+    <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-semibold">Markdown预览工具</h1>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-sun text-yellow-500 dark:hidden"></i>
+                    <i class="fas fa-moon text-blue-300 hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="container mx-auto px-4 py-8 flex-1">
+        <!-- 上传区域 -->
+        <section id="upload-section" class="mb-8">
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 text-center rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <i class="fas fa-file-upload text-4xl mb-4 text-gray-400 dark:text-gray-500"></i>
+                <p class="text-lg mb-2">拖放Markdown文件到这里</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">或点击选择文件</p>
+                <div class="flex justify-center space-x-3">
+                    <label class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-105">
+                        选择文件
+                        <input type="file" id="file-input" accept=".md, .markdown, .txt" class="hidden">
+                    </label>
+                    <button id="new-file-header" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg cursor-pointer transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-file-circle-plus mr-1"></i>新建文件
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 预览区域 -->
+        <section id="preview-section" class="hidden">
+            <!-- 工具栏 -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex space-x-2">
+                    <button id="edit-mode-toggle" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
+                        <i class="fas fa-edit mr-1"></i>编辑
+                    </button>
+                    <button id="save-button" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors">
+                        <i class="fas fa-save mr-1"></i>保存
+                    </button>
+                    <button id="open-button" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors">
+                        <i class="fas fa-folder-open mr-1"></i>打开
+                    </button>
+                    <button id="new-file-preview" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors">
+                        <i class="fas fa-file-circle-plus mr-1"></i>新建
+                    </button>
+                </div>
+                <button id="back-button" class="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors">
+                    <i class="fas fa-arrow-left mr-1"></i>返回
+                </button>
+            </div>
+            
+            <!-- 修改这里：调整布局结构，使编辑模式下变为左右布局 -->
+            <div id="content-container" class="flex flex-col md:flex-row gap-8">
+                <!-- 左侧大纲导航 -->
+                <aside id="toc-sidebar" class="w-full md:w-64 lg:w-72">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                        <h2 class="text-lg font-semibold mb-4">目录</h2>
+                        <nav id="toc-content" class="space-y-1 text-sm">
+                            <p class="text-gray-500 dark:text-gray-400">加载中...</p>
+                        </nav>
+                    </div>
+                </aside>
+
+            <!-- 右侧内容区域 - 分为编辑和预览两个模式 -->
+            <div id="content-main" class="flex-1 flex flex-col md:flex-row gap-4">
+                <!-- 编辑器区域 -->
+                <div id="editor-container" class="hidden md:w-full">
+                    <div id="editor-toolbar">
+                        <!-- 格式化工具 -->
+                        <button class="md-tool-btn" title="标题" data-format="heading"><i class="fas fa-heading"></i></button>
+                        <button class="md-tool-btn" title="加粗" data-format="bold"><i class="fas fa-bold"></i></button>
+                        <button class="md-tool-btn" title="斜体" data-format="italic"><i class="fas fa-italic"></i></button>
+                        <button class="md-tool-btn" title="删除线" data-format="strikethrough"><i class="fas fa-strikethrough"></i></button>
+                        
+                        <div class="md-tool-separator"></div>
+                        
+                        <!-- 列表工具 -->
+                        <button class="md-tool-btn" title="无序列表" data-format="unordered-list"><i class="fas fa-list-ul"></i></button>
+                        <button class="md-tool-btn" title="有序列表" data-format="ordered-list"><i class="fas fa-list-ol"></i></button>
+                        <button class="md-tool-btn" title="任务列表" data-format="task-list"><i class="fas fa-tasks"></i></button>
+                        
+                        <div class="md-tool-separator"></div>
+                        
+                        <!-- 插入工具 -->
+                        <button class="md-tool-btn" title="链接" data-format="link"><i class="fas fa-link"></i></button>
+                        <button class="md-tool-btn" title="图片" data-format="image"><i class="fas fa-image"></i></button>
+                        <button class="md-tool-btn" title="代码块" data-format="code-block"><i class="fas fa-code"></i></button>
+                        <button class="md-tool-btn" title="行内代码" data-format="inline-code"><i class="fas fa-terminal"></i></button>
+                        <button class="md-tool-btn" title="引用" data-format="quote"><i class="fas fa-quote-right"></i></button>
+                        <button class="md-tool-btn" title="表格" data-format="table"><i class="fas fa-table"></i></button>
+                        <button class="md-tool-btn" title="水平线" data-format="hr"><i class="fas fa-minus"></i></button>
+                        <button class="md-tool-btn" title="Mermaid图表" data-format="mermaid"><i class="fas fa-project-diagram"></i></button><div class="md-tool-separator"></div>
+                        
+                        <!-- 帮助按钮 -->
+                        <button id="help-button" class="md-tool-btn" title="使用帮助"><i class="fas fa-question-circle"></i></button>
+                    </div>
+                    <textarea id="markdown-editor" class="w-full h-[70vh] p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow font-mono text-sm"></textarea>
+                </div>
+                
+                <!-- 预览区域 -->
+                <article id="preview-container" class="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                    <div id="markdown-content" class="prose dark:prose-invert">
+                        <p class="text-gray-500 dark:text-gray-400">加载中...</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white dark:bg-gray-800 shadow mt-8">
+        <div class="container mx-auto px-4 py-6">
+            <p class="text-center text-gray-500 dark:text-gray-400 text-sm">© 2025 Markdown预览工具</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript逻辑 -->
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+            securityLevel: 'loose',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+        });
+        
+        // 配置Marked.js
+        marked.use({
+            gfm: true,
+            breaks: true,
+            highlight: (code, lang) => {
+                // 处理Mermaid图表
+                if (lang === 'mermaid') {
+                    return `<div class="mermaid">${code}</div>`;
+                }
+                
+                // 处理普通代码高亮
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            // 添加自定义渲染器
+            renderer: {
+                // 自定义任务列表项渲染 - 修改版
+                listitem(text, task, checked) {
+                    if (task) {
+                        // 移除text中可能已存在的复选框
+                        const cleanText = text.replace(/<input[^>]*>/g, '').trim();
+                        // 使用特殊类名，以便应用特定样式
+                        return `<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" ${checked ? 'checked' : ''} />${cleanText}</li>`;
+                    }
+                    return `<li>${text}</li>`;
+                },
+                // 自定义列表渲染 - 保持不变
+                list(body, ordered, start) {
+                    const type = ordered ? 'ol' : 'ul';
+                    const startAttr = (ordered && start !== 1) ? ` start="${start}"` : '';
+                    
+                    // 检查是否每一个li元素都包含task-list-item类
+                    const allItemsAreTaskItems = body.split('<li').every((item, index) => 
+                        index === 0 || item.includes('class="task-list-item"')
+                    );
+                    
+                    const className = allItemsAreTaskItems ? ' class="task-list"' : '';
+                    return `<${type}${startAttr}${className}>${body}</${type}>`;
+                }
+            }
+        });
+
+        // DOM元素
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadSection = document.getElementById('upload-section');
+        const previewSection = document.getElementById('preview-section');
+        const markdownContent = document.getElementById('markdown-content');
+        const tocContent = document.getElementById('toc-content');
+        const themeToggle = document.getElementById('theme-toggle');
+        const editModeToggle = document.getElementById('edit-mode-toggle');
+        const saveButton = document.getElementById('save-button');
+        const backButton = document.getElementById('back-button');
+        const openButton = document.getElementById('open-button');
+        const editorContainer = document.getElementById('editor-container');
+        const markdownEditor = document.getElementById('markdown-editor');
+        const newFileHeader = document.getElementById('new-file-header');
+        const newFilePreview = document.getElementById('new-file-preview');
+        const editorToolbar = document.getElementById('editor-toolbar');
+        const helpButton = document.getElementById('help-button');
+
+
+        // 当前文件名
+        let currentFileName = '';
+        let isEditMode = false;
+        let originalContent = '';
+
+        // 初始化主题
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('hljs-dark-theme').disabled = false;
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('hljs-dark-theme').disabled = true;
+            }
+        }
+        
+        // 切换主题
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            document.getElementById('hljs-dark-theme').disabled = !document.documentElement.classList.contains('dark');
+            
+            // 更新Mermaid主题
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+                securityLevel: 'loose',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+            });
+            
+            // 只有在预览区域可见时才重新渲染内容
+            if (uploadSection.classList.contains('hidden') && !previewSection.classList.contains('hidden')) {
+                if (markdownContent.innerHTML !== '<p class="text-gray-500 dark:text-gray-400">加载中...</p>') {
+                    // 修复：始终使用编辑器中的最新内容，而不是原始内容
+                    renderMarkdown(markdownEditor.value || originalContent);
+                }
+            }
+        }
+
+        initTheme();
+        themeToggle.addEventListener('click', toggleTheme);
+        
+        // 添加事件监听器
+        editModeToggle.addEventListener('click', toggleEditMode);
+        saveButton.addEventListener('click', saveMarkdownFile);
+        backButton.addEventListener('click', backToUpload);
+        openButton.addEventListener('click', openMarkdownFile);
+
+
+        // 添加新建文件功能的事件监听器
+        if (newFileHeader) newFileHeader.addEventListener('click', createNewFile);
+        if (newFilePreview) newFilePreview.addEventListener('click', createNewFile);
+
+       // 初始化帮助按钮功能 - 确保在DOM完全加载后执行
+       document.addEventListener('DOMContentLoaded', function() {
+            const helpModal = document.getElementById('help-modal');
+            const closeHelp = document.getElementById('close-help');
+            
+            // 添加帮助按钮事件监听器
+            if (helpButton && helpModal) {
+                helpButton.addEventListener('click', function() {
+                    console.log('帮助按钮被点击');
+                    helpModal.classList.remove('hidden');
+
+                    // 确保帮助弹窗应用当前主题
+                    if (document.documentElement.classList.contains('dark')) {
+                        helpModal.setAttribute('data-theme', 'dark');
+                    } else {
+                        helpModal.setAttribute('data-theme', 'light');
+                    }
+                });
+                
+                // 添加关闭帮助按钮事件监听器
+                if (closeHelp) {
+                    closeHelp.addEventListener('click', function() {
+                        helpModal.classList.add('hidden');
+                    });
+                }
+                
+                // 点击弹窗外部关闭
+                helpModal.addEventListener('click', function(e) {
+                    if (e.target === helpModal) {
+                        helpModal.classList.add('hidden');
+                    }
+                });
+                
+                // 按ESC键关闭弹窗
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) {
+                        helpModal.classList.add('hidden');
+                    }
+                });
+            } else {
+                console.error('帮助按钮或帮助弹窗元素未找到');
+            }
+        });
+
+        // 初始化实时预览
+        setupRealTimePreview();
+        
+        // 初始化Markdown编辑工具栏
+        setupMarkdownToolbar();
+
+        // 切换编辑模式
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            
+            if (isEditMode) {
+                // 进入编辑模式
+                editorContainer.classList.remove('hidden');
+                editModeToggle.classList.add('edit-mode-active');
+                editModeToggle.innerHTML = '<i class="fas fa-eye mr-1"></i>预览';
+                
+                // 修改布局为左右并排
+                document.getElementById('content-main').classList.add('flex-row');
+                document.getElementById('editor-container').classList.add('w-1/2');
+                document.getElementById('preview-container').classList.add('w-1/2');
+                
+                // 在编辑模式下隐藏目录侧边栏
+                document.getElementById('toc-sidebar').classList.add('hidden');
+                
+                // 确保滚动联动在布局变化后仍然有效
+                setTimeout(() => {
+                    // 初始同步滚动位置
+                    const preview = document.getElementById('preview-container');
+                    const previewScrollRatio = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+                    markdownEditor.scrollTop = previewScrollRatio * (markdownEditor.scrollHeight - markdownEditor.clientHeight);
+                }, 100);
+            } else {
+                // 返回预览模式
+                editorContainer.classList.add('hidden');
+                editModeToggle.classList.remove('edit-mode-active');
+                editModeToggle.innerHTML = '<i class="fas fa-edit mr-1"></i>编辑';
+                
+                // 恢复原始布局
+                document.getElementById('content-main').classList.remove('flex-row');
+                document.getElementById('editor-container').classList.remove('w-1/2');
+                document.getElementById('preview-container').classList.remove('w-1/2');
+                
+                // 在预览模式下显示目录侧边栏
+                document.getElementById('toc-sidebar').classList.remove('hidden');
+                
+                // 更新预览内容
+                renderMarkdown(markdownEditor.value);
+                
+                // 修复：更新originalContent为当前编辑的内容
+                // 这样在切换主题时能保持一致
+                originalContent = markdownEditor.value;
+            }
+            
+            // 添加调试信息
+            console.log('编辑模式状态:', isEditMode);
+            console.log('编辑器容器显示状态:', !editorContainer.classList.contains('hidden'));
+        }
+
+        // 拖放事件
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+        fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+                
+        // 添加新建文件功能
+        newFileHeader.addEventListener('click', createNewFile);
+        newFilePreview.addEventListener('click', createNewFile);
+        
+        // 创建新文件函数
+        function createNewFile() {
+            // 如果有未保存的更改，提示用户
+            if (markdownEditor.value && markdownEditor.value !== originalContent) {
+                if (!confirm('您有未保存的更改，确定要创建新文件吗？')) {
+                    return;
+                }
+            }
+            
+            // 重置状态
+            currentFileName = '未命名.md';
+            originalContent = '';
+            markdownEditor.value = '# 新文档\n\n请在此处开始编辑您的Markdown文档。\n\n## 二级标题\n\n- 列表项1\n- 列表项2\n\n### 三级标题\n\n```js\nconsole.log("代码示例");\n```\n';
+            
+            // 渲染新文档
+            renderMarkdown(markdownEditor.value);
+            
+            // 显示预览区域
+            uploadSection.classList.add('hidden');
+            previewSection.classList.remove('hidden');
+            
+            // 自动进入编辑模式
+            if (!isEditMode) {
+                toggleEditMode();
+            }
+        }
+        
+        // 设置Markdown编辑工具栏
+        function setupMarkdownToolbar() {
+            // 为每个工具按钮添加点击事件
+            const toolButtons = document.querySelectorAll('.md-tool-btn');
+            toolButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const format = btn.getAttribute('data-format');
+                    applyMarkdownFormat(format);
+                });
+            });
+            
+            // 添加快捷键支持
+            markdownEditor.addEventListener('keydown', e => {
+                // Ctrl+B: 加粗
+                if (e.ctrlKey && e.key === 'b') {
+                    e.preventDefault();
+                    applyMarkdownFormat('bold');
+                }
+                // Ctrl+I: 斜体
+                else if (e.ctrlKey && e.key === 'i') {
+                    e.preventDefault();
+                    applyMarkdownFormat('italic');
+                }
+                // Ctrl+K: 链接
+                else if (e.ctrlKey && e.key === 'k') {
+                    e.preventDefault();
+                    applyMarkdownFormat('link');
+                }
+            // Tab键处理
+            else if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                const start = markdownEditor.selectionStart;
+                const end = markdownEditor.selectionEnd;
+                
+                // 如果有选中多行文本，则对每行进行缩进
+                if (start !== end && markdownEditor.value.substring(start, end).includes('\n')) {
+                    const selectedText = markdownEditor.value.substring(start, end);
+                    const lines = selectedText.split('\n');
+                    
+                    // 根据是否按下Shift键决定是缩进还是取消缩进
+                    if (e.shiftKey) {
+                        // 取消缩进 - 每行开头如果有4个空格或1个制表符则移除
+                        const modifiedLines = lines.map(line => {
+                            if (line.startsWith('    ')) {
+                                return line.substring(4);
+                            } else if (line.startsWith('\t')) {
+                                return line.substring(1);
+                            }
+                            return line;
+                        });
+                        const newText = modifiedLines.join('\n');
+                        markdownEditor.value = markdownEditor.value.substring(0, start) + newText + markdownEditor.value.substring(end);
+                        
+                        // 保持选区
+                        markdownEditor.setSelectionRange(start, start + newText.length);
+                    } else {
+                        // 添加缩进 - 每行开头添加4个空格
+                        const modifiedLines = lines.map(line => '    ' + line);
+                        const newText = modifiedLines.join('\n');
+                        markdownEditor.value = markdownEditor.value.substring(0, start) + newText + markdownEditor.value.substring(end);
+                        
+                        // 保持选区
+                        markdownEditor.setSelectionRange(start, start + newText.length);
+                    }
+                } else {
+                    // 单行或无选中文本的情况
+                    const selectedText = markdownEditor.value.substring(start, end);
+                    
+                    if (e.shiftKey && start > 0) {
+                        // 取消缩进 - 检查选中文本前面是否有空格可以删除
+                        const lineStart = markdownEditor.value.lastIndexOf('\n', start - 1) + 1;
+                        const linePrefix = markdownEditor.value.substring(lineStart, start);
+                        
+                        if (linePrefix.length >= 4 && linePrefix.endsWith('    ')) {
+                            // 删除前面的4个空格
+                            markdownEditor.value = markdownEditor.value.substring(0, lineStart) + 
+                                                  linePrefix.substring(0, linePrefix.length - 4) + 
+                                                  selectedText + 
+                                                  markdownEditor.value.substring(end);
+                            markdownEditor.setSelectionRange(start - 4, end - 4);
+                        } else if (linePrefix.endsWith('\t')) {
+                            // 删除前面的制表符
+                            markdownEditor.value = markdownEditor.value.substring(0, lineStart) + 
+                                                  linePrefix.substring(0, linePrefix.length - 1) + 
+                                                  selectedText + 
+                                                  markdownEditor.value.substring(end);
+                            markdownEditor.setSelectionRange(start - 1, end - 1);
+                        }
+                    } else {
+                        // 添加缩进 - 在选中文本前添加4个空格
+                        const lineStart = markdownEditor.value.lastIndexOf('\n', start - 1) + 1;
+                        markdownEditor.value = markdownEditor.value.substring(0, lineStart) +                                               '    ' + 
+                                              markdownEditor.value.substring(lineStart, end) + 
+                                              markdownEditor.value.substring(end);
+                        
+                        // 更新选区位置
+                        if (start === end) {
+                            // 如果是光标，则移动光标
+                            markdownEditor.setSelectionRange(start + 4, end + 4);
+                        } else {
+                            // 如果有选中文本，则保持选区
+                            markdownEditor.setSelectionRange(start + 4, end + 4);
+                        }
+                    }
+                }
+                
+                // 触发input事件以更新预览
+                markdownEditor.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            });
+        }
+
+
+        
+        // 应用Markdown格式
+        function applyMarkdownFormat(format) {
+            const textarea = markdownEditor;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            let replacement = '';
+            
+            switch (format) {
+                case 'bold':
+                    replacement = `**${selectedText}**`;
+                    break;
+                case 'italic':
+                    replacement = `*${selectedText}*`;
+                    break;
+                case 'strikethrough':
+                    replacement = `~~${selectedText}~~`;
+                    break;
+                case 'heading':
+                    // 如果选中的文本已经是标题，则增加级别
+                    if (selectedText.startsWith('# ')) {
+                        replacement = `#${selectedText}`;
+                    } else {
+                        replacement = `# ${selectedText}`;
+                    }
+                    break;
+                case 'link':
+                    replacement = selectedText ? `[${selectedText}](url)` : `[链接文本](url)`;
+                    break;
+                case 'image':
+                    replacement = `![${selectedText || '图片描述'}](图片URL)`;
+                    break;
+                case 'code-block': // 修改为代码块插入
+                    // 始终插入代码块，不管是否有选中文本
+                    if (selectedText) {
+                        replacement = `\`\`\`\n${selectedText}\n\`\`\``;
+                    } else {
+                        replacement = `\`\`\`\n代码块\n\`\`\``;
+                    }
+                    break;
+                case 'inline-code': // 新增行内代码插入
+                    replacement = `\`${selectedText || '行内代码'}\``;
+                    break;
+                case 'quote':
+                    // 处理多行引用
+                    if (selectedText.includes('\n')) {
+                        const lines = selectedText.split('\n');
+                        replacement = lines.map(line => `> ${line}`).join('\n');
+                    } else {
+                        replacement = `> ${selectedText}`;
+                    }
+                    break;
+                case 'unordered-list':
+                    if (selectedText.includes('\n')) {
+                        const lines = selectedText.split('\n');
+                        replacement = lines.map(line => `- ${line}`).join('\n');
+                    } else {
+                        replacement = `- ${selectedText}`;
+                    }
+                    break;
+                case 'ordered-list':
+                    if (selectedText.includes('\n')) {
+                        const lines = selectedText.split('\n');
+                        replacement = lines.map((line, i) => `${i+1}. ${line}`).join('\n');
+                    } else {
+                        replacement = `1. ${selectedText}`;
+                    }
+                    break;
+                case 'task-list':
+                    if (selectedText.includes('\n')) {
+                        const lines = selectedText.split('\n');
+                        replacement = lines.map(line => `- [ ] ${line}`).join('\n');
+                    } else {
+                        replacement = `- [ ] ${selectedText}`;
+                    }
+                    break;
+                case 'table':
+                    replacement = `| 标题1 | 标题2 | 标题3 |\n| --- | --- | --- |\n| 内容1 | 内容2 | 内容3 |\n| 内容4 | 内容5 | 内容6 |`;
+                    break;
+                case 'hr':
+                    replacement = `\n---\n`;
+                    break;
+                case 'mermaid':
+                    replacement = `\`\`\`mermaid\ngraph TD\n    A[开始] --> B[处理]\n    B --> C[结束]\n\`\`\``;
+                    break;
+            }
+            
+            // 替换选中的文本
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            
+            // 更新光标位置
+            const newCursorPos = start + replacement.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            
+            // 聚焦回编辑器
+            textarea.focus();
+            
+            // 触发input事件以更新预览
+            const event = new Event('input', { bubbles: true });
+            textarea.dispatchEvent(event);
+        }
+        
+        // 初始化编辑器
+        setupMarkdownEditor();
+
+        // 处理上传文件
+        function handleFiles(files) {
+            if (!files.length) return;
+            const file = files[0];
+            if (!/\.(md|markdown|txt)$/i.test(file.name)) {
+                alert('请上传Markdown文件 (.md, .markdown, .txt)');
+                return;
+            }
+            currentFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = e => {
+                originalContent = e.target.result;
+                renderMarkdown(originalContent);
+                markdownEditor.value = originalContent;
+            };
+            reader.readAsText(file);
+        }
+
+        // 渲染Markdown内容 - 修改部分
+        function renderMarkdown(content) {
+            // 保存滚动位置
+            const editorScrollPosition = markdownEditor.scrollTop;
+            const previewScrollPosition = document.getElementById('preview-container').scrollTop;
+            
+            markdownContent.innerHTML = marked.parse(content);
+            markdownContent.classList.add('fade-in');
+            
+            // 只有在首次加载时才隐藏上传区域
+            if (uploadSection.classList.contains('hidden') === false) {
+                uploadSection.classList.add('hidden');
+                previewSection.classList.remove('hidden');
+            }
+            
+            applyHeadingStyles();
+            document.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+            
+            // 渲染Mermaid图表
+            renderMermaidDiagrams();
+            
+            // 在编辑模式下，只生成目录但不显示侧边栏
+            generateTOC();
+            if (isEditMode) {
+                document.getElementById('toc-sidebar').classList.add('hidden');
+            } else {
+                document.getElementById('toc-sidebar').classList.remove('hidden');
+            }
+            lazyLoadImages();
+
+            // 添加任务列表复选框事件处理
+            setupTaskListCheckboxes(content);
+            
+            // 恢复滚动位置
+            setTimeout(() => {
+                if (isEditMode) {
+                    markdownEditor.scrollTop = editorScrollPosition;
+                    document.getElementById('preview-container').scrollTop = previewScrollPosition;
+                } else {
+                    window.scrollTo(0, previewScrollPosition);
+                }
+            }, 100);
+        }
+        
+       // 设置任务列表复选框的交互功能
+       function setupTaskListCheckboxes(originalContent) {
+            const checkboxes = document.querySelectorAll('#markdown-content .task-list-item-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.addEventListener('change', function() {
+                    // 如果在编辑模式下，直接更新编辑器内容
+                    if (isEditMode) {
+                        updateTaskListInEditor(index, this.checked);
+                    } else {
+                        // 在预览模式下，更新原始内容并重新渲染
+                        const updatedContent = updateTaskListInMarkdown(originalContent, index, this.checked);
+                        if (updatedContent !== originalContent) {
+                            // 更新编辑器内容
+                            markdownEditor.value = updatedContent;
+                            // 如果不在编辑模式，保持复选框状态
+                            setTimeout(() => {
+                                const checkboxes = document.querySelectorAll('#markdown-content .task-list-item-checkbox');
+                                if (checkboxes[index]) {
+                                    checkboxes[index].checked = this.checked;
+                                }
+                            }, 10);
+                        }
+                    }
+                });
+            });
+        }        
+        // 在编辑器中更新任务列表项
+        function updateTaskListInEditor(index, checked) {
+            const content = markdownEditor.value;
+            const lines = content.split('\n');
+            let taskCount = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // 匹配任务列表格式: - [ ] 或 - [x]
+                if (/^\s*-\s*\[\s*[xX ]?\s*\]/.test(line)) {
+                    if (taskCount === index) {
+                        // 找到目标任务，更新其状态
+                        lines[i] = line.replace(/^\s*-\s*\[\s*[xX ]?\s*\]/, checked ? '- [x]' : '- [ ]');
+                        break;
+                    }
+                    taskCount++;
+                }
+            }
+            
+            // 更新编辑器内容
+            markdownEditor.value = lines.join('\n');
+            // 触发input事件以更新预览
+            markdownEditor.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        // 在Markdown文本中更新任务列表项
+        function updateTaskListInMarkdown(content, index, checked) {
+            const lines = content.split('\n');
+            let taskCount = 0;
+            let updated = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // 匹配任务列表格式: - [ ] 或 - [x]
+                if (/^\s*-\s*\[\s*[xX ]?\s*\]/.test(line)) {
+                    if (taskCount === index) {
+                        // 找到目标任务，更新其状态
+                        lines[i] = line.replace(/^\s*-\s*\[\s*[xX ]?\s*\]/, checked ? '- [x]' : '- [ ]');
+                        updated = true;
+                        break;
+                    }
+                    taskCount++;
+                }
+            }
+            
+            return updated ? lines.join('\n') : content;
+        }
+        // 保存文件
+        function saveMarkdownFile() {
+            const content = markdownEditor.value;
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName || 'document.md';
+            
+            // 添加保存前的提示
+            if (confirm(`是否将文件保存为 "${a.download}"？\n\n点击"确定"下载文件，点击"取消"可修改文件名。`)) {
+                // 用户确认，直接保存
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                // 用户取消，提示输入新文件名
+                const newFileName = prompt("请输入新的文件名:", a.download);
+                if (newFileName) {
+                    a.download = newFileName.endsWith('.md') ? newFileName : newFileName + '.md';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    // 更新当前文件名
+                    currentFileName = a.download;
+                }
+            }
+            
+            URL.revokeObjectURL(url);
+            
+            // 更新原始内容
+            originalContent = content;
+            
+            // 重新加载文件以查看变化
+            setTimeout(() => {
+                renderMarkdown(content);
+                alert('文件已成功保存！');
+            }, 500);
+        }
+        
+        
+        // 返回上传界面
+        function backToUpload() {
+            // 如果有未保存的更改，提示用户
+            if (markdownEditor.value !== originalContent) {
+                if (!confirm('您有未保存的更改，确定要返回吗？')) {
+                    return;
+                }
+            }
+            
+            // 重置状态
+            currentFileName = '';
+            originalContent = '';
+            markdownEditor.value = '';
+            markdownContent.innerHTML = '<p class="text-gray-500 dark:text-gray-400">加载中...</p>';
+            
+            // 返回上传界面
+            previewSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            
+            // 重置编辑模式
+            if (isEditMode) {
+                toggleEditMode();
+            }
+            
+            // 重置文件输入框，确保可以再次选择同一文件
+            fileInput.value = '';
+        }
+        
+        // 打开Markdown文件
+        function openMarkdownFile() {
+            // 创建一个临时的文件输入框
+            const tempFileInput = document.createElement('input');
+            tempFileInput.type = 'file';
+            tempFileInput.accept = '.md, .markdown, .txt';
+            tempFileInput.style.display = 'none';
+            
+            // 当用户选择文件后处理
+            tempFileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    handleFiles(this.files);
+                }
+                // 移除临时元素
+                document.body.removeChild(tempFileInput);
+            });
+            
+            // 添加到DOM并触发点击
+            document.body.appendChild(tempFileInput);
+            tempFileInput.click();
+        }
+        
+        // 实时预览功能
+        function setupRealTimePreview() {
+            let debounceTimer;
+            markdownEditor.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    renderMarkdown(markdownEditor.value);
+                }, 300); // 300ms防抖
+            });
+            
+            // 添加滚动联动功能
+            setupScrollSync();
+        }
+
+
+        // 添加滚动联动功能
+        function setupScrollSync() {
+            const editor = markdownEditor;
+            const preview = document.getElementById('preview-container');
+            
+            let isEditorScrolling = false;
+            
+            // 更智能的滚动同步函数
+            function syncScroll(source, target) {
+                // 计算源元素的相对滚动位置（考虑可见区域）
+                const sourceHeight = source.scrollHeight;
+                const sourceVisible = source.clientHeight;
+                const sourceScrolled = source.scrollTop;
+                
+                // 计算目标应该滚动的位置
+                const targetHeight = target.scrollHeight;
+                const targetVisible = target.clientHeight;
+                
+                // 计算相对位置（考虑可见区域的中心点）
+                const sourceCenter = sourceScrolled + (sourceVisible / 2);
+                const sourceRatio = sourceCenter / sourceHeight;
+                
+                // 计算目标滚动位置（考虑目标可见区域的中心点）
+                const targetCenter = sourceRatio * targetHeight;
+                const targetScrollTop = targetCenter - (targetVisible / 2);
+                
+                // 确保滚动位置在有效范围内
+                const maxScroll = targetHeight - targetVisible;
+                const safeScrollTop = Math.max(0, Math.min(maxScroll, targetScrollTop));
+                
+                // 应用滚动
+                target.scrollTop = safeScrollTop;
+                
+                // 调试信息
+                console.log(`同步滚动: 编辑器→预览, 比例: ${sourceRatio.toFixed(3)}`);
+            }
+            
+            // 编辑器滚动时同步预览区
+            editor.addEventListener('scroll', () => {
+                if (isEditMode) {
+                    isEditorScrolling = true;
+                    syncScroll(editor, preview);
+                    
+                    // 防止循环触发
+                    setTimeout(() => {
+                        isEditorScrolling = false;
+                    }, 100);
+                }
+            });
+            
+            // 移除预览区滚动同步编辑器的功能
+            // 预览区可以自由滚动而不影响编辑区
+        }
+
+        // 设置实时预览
+        function setupRealTimePreview() {
+            markdownEditor.addEventListener('input', () => {
+                const content = markdownEditor.value;
+                renderMarkdown(content);
+            });
+            
+            // 添加滚动联动功能
+            setupScrollSync();
+        }
+        // 应用标题样式
+        function applyHeadingStyles() {
+            const headings = {
+                'h1': 'text-4xl font-bold mb-6',
+                'h2': 'text-3xl font-bold mb-4',
+                'h3': 'text-2xl font-bold mb-3', // 确保h3使用font-bold
+                'h4': 'text-xl font-medium mb-2',
+                'h5': 'text-lg font-normal mb-1',
+                'h6': 'text-base font-normal mb-1'
+            };
+            for (const [tag, classes] of Object.entries(headings)) {
+                const elements = document.querySelectorAll(`#markdown-content ${tag}`);
+                elements.forEach(el => {
+                    // 清除可能已存在的类，避免样式冲突
+                    const classesToKeep = Array.from(el.classList).filter(c => 
+                        !c.startsWith('text-') && !c.startsWith('font-') && !c.startsWith('mb-'));
+                    el.className = classesToKeep.join(' ');
+                    
+                    // 添加基本样式
+                    el.classList.add(...classes.split(' '));
+                    
+                    // 检查是否为数字标题（如"2.1"）
+                    if (/^\d+(\.\d+)*/.test(el.textContent.trim())) {
+                        el.classList.add('numeric-heading');
+                    }
+                });
+            }
+            
+            // 处理段落中可能的数字标题
+            const paragraphs = document.querySelectorAll('#markdown-content p');
+            paragraphs.forEach(p => {
+                const text = p.innerHTML;
+                if (/^\d+(\.\d+)*\s+/.test(text.trim())) {
+                    p.innerHTML = text.replace(/^(\d+(\.\d+)*)\s+/, '<strong>$1</strong> ');
+                }
+            });
+        }
+
+        // 生成大纲导航
+        function generateTOC() {
+            const headings = markdownContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            if (!headings.length) {
+                tocContent.innerHTML = '<p class="text-gray-500 dark:text-gray-400">无标题</p>';
+                return;
+            }
+            let toc = '<ul class="space-y-1">';
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName.slice(1));
+                const id = `heading-${index}`;
+                heading.id = id;
+                toc += `
+                    <li class="pl-${(level - 1) * 2}">
+                        <a href="#${id}" class="block py-1 px-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                            ${heading.textContent}
+                        </a>
+                    </li>
+                `;
+            });
+            toc += '</ul>';
+            tocContent.innerHTML = toc;
+            tocContent.querySelectorAll('a').forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+        }
+
+        // 图片懒加载
+        function lazyLoadImages() {
+            const images = markdownContent.querySelectorAll('img');
+            images.forEach(img => {
+                img.setAttribute('data-src', img.src);
+                img.removeAttribute('src');
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.add('loaded');
+                            observer.unobserve(img);
+                        }
+                    });
+                });
+                observer.observe(img);
+            });
+        }
+        
+        // 渲染Mermaid图表
+        // 渲染Mermaid图表 - 完全替换这个函数
+        function renderMermaidDiagrams() {
+            console.log('开始渲染Mermaid图表');
+            
+            // 查找所有Mermaid图表
+            const mermaidDivs = document.querySelectorAll('.mermaid');
+            console.log('找到Mermaid图表数量:', mermaidDivs.length);
+            
+            if (mermaidDivs.length > 0) {
+                // 重新初始化Mermaid配置
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+                    securityLevel: 'loose',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                });
+                
+                // 清除所有图表内容并添加唯一ID
+                mermaidDivs.forEach((div, index) => {
+                    // 保存原始内容
+                    const originalContent = div.textContent;
+                    // 设置唯一ID
+                    div.id = `mermaid-diagram-${index}`;
+                    // 重置内容
+                    div.innerHTML = originalContent;
+                    // 添加调试信息
+                    console.log(`处理图表 #${index}:`, originalContent.substring(0, 50) + '...');
+                });
+                
+                // 使用最新的API渲染
+                try {
+                    console.log('尝试使用mermaid.run()方法渲染');
+                    mermaid.run({
+                        querySelector: '.mermaid'
+                    }).then(() => {
+                        console.log('Mermaid图表渲染成功');
+                    }).catch(error => {
+                        console.error('Mermaid.run()渲染错误:', error);
+                        fallbackMermaidRender(mermaidDivs);
+                    });
+                } catch (error) {
+                    console.error('Mermaid.run()方法不可用:', error);
+                    fallbackMermaidRender(mermaidDivs);
+                }
+            }
+        }
+        
+        // 添加备选渲染方法
+        function fallbackMermaidRender(mermaidDivs) {
+            console.log('尝试备选渲染方法');
+            try {
+                // 尝试使用init方法
+                console.log('尝试使用mermaid.init()方法');
+                mermaid.init(undefined, mermaidDivs)
+                    .then(() => console.log('备选方法渲染成功'))
+                    .catch(error => console.error('备选方法也失败:', error));
+            } catch (error) {
+                console.error('所有Mermaid渲染方法都失败:', error);
+                // 显示错误信息给用户
+                mermaidDivs.forEach(div => {
+                    div.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">
+                        Mermaid图表渲染失败。请检查语法或刷新页面重试。
+                    </div>`;
+                });
+            }
+        }
+
+    </script>
+    <!-- 在body结束标签前添加帮助弹窗 -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Markdown编辑器使用帮助</h2>
+                    <button id="close-help" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">快捷键</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <span class="font-mono bg-gray-200 dark:bg-gray-600 px-1 rounded">Ctrl+B</span> 加粗文本
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <span class="font-mono bg-gray-200 dark:bg-gray-600 px-1 rounded">Ctrl+I</span> 斜体文本
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <span class="font-mono bg-gray-200 dark:bg-gray-600 px-1 rounded">Ctrl+K</span> 插入链接
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <span class="font-mono bg-gray-200 dark:bg-gray-600 px-1 rounded">Tab</span> 增加缩进
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <span class="font-mono bg-gray-200 dark:bg-gray-600 px-1 rounded">Shift+Tab</span> 减少缩进
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">工具栏功能</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-heading w-6"></i> 添加标题
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-bold w-6"></i> 加粗文本
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-italic w-6"></i> 斜体文本
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-strikethrough w-6"></i> 删除线
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-list-ul w-6"></i> 无序列表
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-list-ol w-6"></i> 有序列表
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-tasks w-6"></i> 任务列表
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-link w-6"></i> 插入链接
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-image w-6"></i> 插入图片
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-code w-6"></i> 插入代码块
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-quote-right w-6"></i> 引用文本
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-terminal w-6"></i> 插入行内代码
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-table w-6"></i> 插入表格
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-minus w-6"></i> 插入水平线
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center">
+                                <i class="fas fa-project-diagram w-6"></i> 插入Mermaid图表
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Markdown基础语法</h3>
+                        <div class="space-y-2">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <code class="block"># 一级标题</code>
+                                <code class="block">## 二级标题</code>
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <code class="block">**加粗文本**</code>
+                                <code class="block">*斜体文本*</code>
+                            </div>
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                                <code class="block">[链接文本](URL)</code>
+                                <code class="block">![图片描述](图片URL)</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
