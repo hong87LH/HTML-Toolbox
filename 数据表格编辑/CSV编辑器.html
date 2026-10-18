@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV 编辑器 (极简高效版)</title>
+    
+    <!-- 引入 Luckysheet 和依赖 -->
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/css/pluginsCss.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/plugins.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/css/luckysheet.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/assets/iconfont/iconfont.css' />
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/js/plugin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet/dist/luckysheet.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* --- 顶部绿色工具栏 (Excel 风格) --- */
+        #custom-toolbar {
+            height: 48px;
+            background-color: #217346; /* Excel 经典绿 */
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        /* 标题区域 */
+        #custom-toolbar h1 {
+            font-size: 18px;
+            margin: 0 25px 0 0;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+        
+        #custom-toolbar h1 span {
+            font-size: 11px;
+            font-weight: normal;
+            opacity: 0.9;
+            margin-left: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        /* 按钮样式 */
+        .tool-btn {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.15); /* 极淡的边框 */
+            color: white;
+            padding: 6px 14px;
+            margin-right: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+        }
+
+        .tool-btn:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .tool-btn:active {
+            background-color: rgba(255,255,255,0.3);
+            transform: translateY(1px);
+        }
+
+        .tool-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* 竖线分隔符 */
+        .separator {
+            width: 1px;
+            height: 24px;
+            background-color: rgba(255,255,255,0.3);
+            margin: 0 12px 0 4px;
+        }
+
+        /* 高亮功能按钮颜色微调（可选，这里保持整体统一，只加粗文字） */
+        .tool-btn.highlight {
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        #file-input { display: none; }
+
+        /* 表格容器 */
+        #luckysheet {
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            width: 100%;
+            top: 48px; /* 对应 toolbar 高度 */
+            bottom: 0px;
+        }
+
+        /* 拖拽层 */
+        #drop-zone {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(33, 115, 70, 0.92);
+            z-index: 9999;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 24px;
+        }
+        #drop-zone.active { display: flex; }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部工具栏 -->
+    <div id="custom-toolbar">
+        <h1>CSV 编辑器 <span>Excel 模式</span></h1>
+        
+        <!-- 文件操作组 -->
+        <button class="tool-btn" onclick="document.getElementById('file-input').click()">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            打开
+        </button>
+        
+        <button class="tool-btn" onclick="createNew()">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            新建
+        </button>
+
+        <button class="tool-btn" onclick="exportCSV()">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            保存 CSV
+        </button>
+        
+        <!-- 分隔符 -->
+        <div class="separator"></div>
+
+        <!-- 数据清洗组 (核心功能) -->
+        <button class="tool-btn highlight" onclick="convertSelectionToValue()" title="移除公式，仅保留计算结果">
+            <svg viewBox="0 0 24 24"><path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z"/></svg>
+            公式转数值
+        </button>
+        
+        <button class="tool-btn highlight" onclick="removeDuplicates()" title="根据选中列去重">
+            <svg viewBox="0 0 24 24"><path d="M16 8h-2v2h2v-2zm0 4h-2v2h2v-2zm-4-4H4v2h8v-2zm0 4H4v2h8v-2zm4.56 8l-2.03-2.03L16 16.53 14.53 18l1.46 1.46-1.46 1.47 1.46 1.46 2.03-2.03 2.03 2.03 1.46-1.46-1.46-1.47 1.46-1.46L20.03 16.53 18.56 18l-2.03 2z"/></svg>
+            删除重复项
+        </button>
+
+        <input type="file" id="file-input" accept=".csv,.txt" onchange="handleFileSelect(event)">
+    </div>
+
+    <!-- 拖拽提示 -->
+    <div id="drop-zone">
+        <svg style="width: 64px; height: 64px; fill: white; margin-bottom: 20px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-9-4h2v-4h4v-2h-4V5h-2v4H6v2h4z"/></svg>
+        松开鼠标以打开 CSV 文件
+    </div>
+
+    <!-- 表格主体 -->
+    <div id="luckysheet"></div>
+
+    <script>
+        const CONFIG = {
+            lang: 'zh',
+            showinfobar: false, // 隐藏官方顶部信息栏
+            showsheetbar: true,
+            enableAddRow: true,
+            enableAddBackTop: false, // 简化底部
+            forceCalculation: true,  // 强制公式计算
+            // 开启完整的右键菜单，方便使用筛选、排序等未在顶部列出的功能
+            cellRightClickConfig: {
+                copy: true, copyAs: true, paste: true, insertRow: true, insertColumn: true, 
+                deleteRow: true, deleteColumn: true, deleteCell: true, hideRow: true, 
+                hideColumn: true, rowHeight: true, columnWidth: true, clear: true, 
+                matrix: true, sort: true, filter: true, chart: false, image: false, 
+                link: false, data: true, cellFormat: true
+            }
+        };
+
+        $(function () {
+            initGrid([{ "name": "Sheet1", "status": 1, "celldata": [] }]);
+            setupDragAndDrop();
+        });
+
+        function initGrid(exportJson) {
+            luckysheet.create({
+                container: 'luckysheet',
+                data: exportJson,
+                title: "CSV Editor",
+                ...CONFIG
+            });
+        }
+
+        // ================= 数据清洗核心功能 =================
+
+        // 1. 公式转数值 (清除公式属性 f)
+        function convertSelectionToValue() {
+            const ranges = luckysheet.getRange();
+            if (!ranges || ranges.length === 0) {
+                alert("请先选中包含公式的区域");
+                return;
+            }
+
+            let hasChanged = false;
+            ranges.forEach(range => {
+                for(let r = range.row[0]; r <= range.row[1]; r++) {
+                    for(let c = range.column[0]; c <= range.column[1]; c++) {
+                        let val = luckysheet.getCellValue(r, c);
+                        let sheetData = luckysheet.getSheetData();
+                        let cell = sheetData[r][c];
+                        
+                        // 仅当单元格存在且有公式(f)时才处理
+                        if (cell && cell.f) {
+                            luckysheet.setCellValue(r, c, {
+                                m: val,     // 显示值
+                                v: val,     // 实际值
+                                f: null,    // 核心：彻底清空公式
+                                ct: { fa: "General", t: "n" } // 设为常规格式
+                            });
+                            hasChanged = true;
+                        }
+                    }
+                }
+            });
+
+            if(hasChanged) {
+                luckysheet.refresh();
+                // 悄悄地完成，不弹窗打扰
+            } else {
+                // 如果用户没选对地方，给个轻微提示
+                console.log("选区内无公式");
+            }
+        }
+
+        // 2. 删除重复项 (基于选区列)
+        function removeDuplicates() {
+            let ranges = luckysheet.getRange();
+            let allData = luckysheet.getSheetData();
+            
+            // 确定检查哪些列
+            let checkCols = [];
+            if (ranges && ranges.length > 0) {
+                let range = ranges[0];
+                for (let c = range.column[0]; c <= range.column[1]; c++) {
+                    checkCols.push(c);
+                }
+            } else {
+                alert("请先选择参考列（例如选中 A 列，即表示根据 A 列内容去重）");
+                return;
+            }
+
+            // 确认操作
+            if(!confirm(`将根据选中的 ${checkCols.length} 列数据进行去重，保留首行。继续吗？`)) return;
+
+            let seen = new Set();
+            let newData = [];
+            let duplicateCount = 0;
+            let rowCount = allData.length;
+
+            for(let r = 0; r < rowCount; r++) {
+                let row = allData[r];
+                if(!row) continue; // 跳过空结构行
+
+                // 构建唯一键
+                let keyParts = [];
+                checkCols.forEach(colIndex => {
+                    let cell = row[colIndex];
+                    let val = (cell && cell.v !== null) ? cell.v : "";
+                    keyParts.push(val);
+                });
+                let key = keyParts.join("|||"); // 使用特殊分隔符防止混淆
+
+                if(seen.has(key)) {
+                    duplicateCount++;
+                } else {
+                    seen.add(key);
+                    newData.push(row);
+                }
+            }
+
+            if(duplicateCount === 0) {
+                alert("未发现重复项");
+                return;
+            }
+
+            // 重载数据
+            let newCellData = [];
+            for(let r=0; r<newData.length; r++) {
+                for(let c=0; c<newData[r].length; c++) {
+                    if(newData[r][c]) {
+                        // 深拷贝并修正行号 r
+                        let cell = JSON.parse(JSON.stringify(newData[r][c]));
+                        newCellData.push({ r: r, c: c, v: cell });
+                    }
+                }
+            }
+            
+            // 刷新表格
+            luckysheet.destroy();
+            luckysheet.create({
+                container: 'luckysheet',
+                data: [{ "name": "CleanedData", "celldata": newCellData }],
+                title: "CSV Editor",
+                ...CONFIG
+            });
+
+            alert(`已删除 ${duplicateCount} 个重复行`);
+        }
+
+        // ================= 常规文件功能 =================
+
+        function createNew() {
+            if(confirm("确定新建吗？未保存的内容将丢失。")) {
+                initGrid([{ "name": "Sheet1", "status": 1, "celldata": [] }]);
+            }
+        }
+
+        function handleFileSelect(evt) {
+            const file = evt.target.files[0];
+            if (file) parseCSV(file);
+            evt.target.value = '';
+        }
+
+        function parseCSV(file) {
+            Papa.parse(file, {
+                complete: function(results) { loadDataToGrid(results.data, file.name); },
+                error: function(err) { alert("解析失败: " + err.message); },
+                skipEmptyLines: false
+            });
+        }
+
+        function loadDataToGrid(csvData, fileName) {
+            let cellData = [];
+            for(let r=0; r<csvData.length; r++) {
+                for(let c=0; c<csvData[r].length; c++) {
+                    let value = csvData[r][c];
+                    if(value !== null && value !== undefined) {
+                        let cell = { v: value, m: value };
+                        // 简单公式识别 (以=开头且不含<避免误判HTML)
+                        if(typeof value === 'string' && value.startsWith('=') && !value.includes('<')) {
+                           cell.f = value;
+                           cell.v = null;
+                        }
+                        cellData.push({ r: r, c: c, v: cell });
+                    }
+                }
+            }
+            luckysheet.destroy();
+            luckysheet.create({
+                container: 'luckysheet',
+                title: fileName,
+                data: [{ "name": fileName.replace('.csv', '').substring(0, 10) || "Sheet1", "celldata": cellData }],
+                ...CONFIG
+            });
+        }
+
+        function exportCSV() {
+            let data = luckysheet.getSheetData();
+            let csvArray = [];
+            let maxRow = 0, maxCol = 0;
+            
+            // 1. 确定边界
+            for(let r=0; r<data.length; r++) {
+                for(let c=0; c<data[r].length; c++) {
+                    if(data[r][c] && (data[r][c].v !== null || data[r][c].m !== null)) {
+                        maxRow = Math.max(maxRow, r);
+                        maxCol = Math.max(maxCol, c);
+                    }
+                }
+            }
+
+            // 2. 提取数据 (优先显示值m)
+            for(let r=0; r<=maxRow; r++) {
+                let row = [];
+                for(let c=0; c<=maxCol; c++) {
+                    let cell = data[r][c];
+                    let val = "";
+                    if(cell) {
+                        val = (cell.m !== null && cell.m !== undefined) ? cell.m : (cell.v || "");
+                    }
+                    row.push(val);
+                }
+                csvArray.push(row);
+            }
+
+            // 3. 导出
+            let csvString = Papa.unparse(csvArray);
+            let blob = new Blob(["\uFEFF" + csvString], {type: 'text/csv;charset=utf-8;'});
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "exported_data.csv";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            window.addEventListener('dragenter', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('active');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) parseCSV(files[0]);
+            });
+        }
+    </script>
+</body>
+</html>
