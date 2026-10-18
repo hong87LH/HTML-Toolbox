@@ -9,6 +9,7 @@
 | **图片实时对比工具** · v1.1 | 多版本对比、三态差异高亮（常规 / 黑底 / ΔE2000 热力图）、临时热力图缓存 | [打开体验 ↗](https://www.showyourcode.app/share/qglr1umvdox0cy) | [查看 HTML](./图片预览与对比/图片实时对比工具.html) |
 | **移动端三模式图片预览** | 拖拽多张详情图，切换默认、天猫和京东预览方式 | [打开体验 ↗](https://www.showyourcode.app/zh/share/9d248f9e-dd87-4ac8-b366-741d319b6338) | [查看 HTML](./图片预览与对比/移动端三模式图片预览.html) |
 | **色块拼接排版工具** · v2.0 | 图片横向拼接、按货号前 7/9 位分组、跨组拖拽排序、重叠间距与自定义高度、逐组及批量 PNG 导出 | [在线体验 ↗](https://www.showyourcode.app/share/370f3adc-b938-4057-bf07-714a34acd9b9) | [查看 HTML](./图片拼接与排版/色块拼接排版工具-v2.0.html) |
+| **色值获取 · 色彩分析 Pro** | 拖入多张图片提取 6 色调色板、局部框选取色、色阶增强对比及整体平均色，点击色块复制 HEX | [在线体验 ↗](https://www.showyourcode.app/share/9c90eb54-d8e8-4364-b55f-d21e126c69dd) | [查看 HTML](./色彩分析与取色/获取色值.html) |
 | **自定义裁切工具 · Slice Studio** | 三栏切片工作台、图片批处理、OCR 命名、PNG/JPG/ZIP 导出，支持导入裁切 JSON | 暂未提供外部体验地址 | [查看 HTML](./自定义裁切/自定义裁切工具.html) |
 | **PPT 详情页切片整理** · v4 | 批量缩放、底部白边裁切、拖拽排序、重命名及 JPG/ZIP 导出（与自定义裁切独立） | 暂未提供 | [查看 HTML](./PPT详情页整理/PPT详情页切片整理.html) |
 | **CSV 编辑器** | Excel 式 CSV 编辑、公式转数值、按选中列去重、导出 CSV | 暂未提供 | [查看 HTML](./数据表格编辑/CSV编辑器.html) |
@@ -43,6 +44,8 @@ HTML-Toolbox/
 │   └── 移动端三模式图片预览.html
 ├── 图片拼接与排版/
 │   └── 色块拼接排版工具-v2.0.html
+├── 色彩分析与取色/
+│   └── 获取色值.html
 ├── 自定义裁切/
 │   ├── 自定义裁切工具.html
 │   ├── 详情页裁切-v5.json
@@ -77,6 +80,6 @@ HTML-Toolbox/
 - **配置文件：** 在对应工具目录下载 JSON，通过工具内「导入配置」功能加载。
 - **版本管理：** 维持清晰、稳定的工具文件名；后续升级覆盖同一路径，依靠 Git 提交历史追溯版本；新增工具或配套 JSON 只更新同一组目录和根 README。
 - **目录约束：** 最多一层功能组目录（`功能组/文件`），不再额外增加 `tools/`、`assets/`、`presets/` 等子目录。
-- **外部依赖：** 图片对比使用 Tailwind / Lucide CDN；裁切工作台使用 Bootstrap / JSZip CDN；PPT 切片整理使用 JSZip CDN；色块拼接排版使用 Tailwind / React / Babel CDN；CSV 编辑器使用 Luckysheet / PapaParse CDN；Markdown 工具使用 Marked / Highlight.js / Mermaid 等 CDN。网络断开时 CDN 样式、图标或 ZIP 功能可能受影响。裁切工具若使用 UMI-OCR，还需本地 OCR HTTP 服务正常运行和浏览器允许访问。
+- **外部依赖：** 图片对比使用 Tailwind / Lucide CDN；裁切工作台使用 Bootstrap / JSZip CDN；PPT 切片整理使用 JSZip CDN；色块拼接排版使用 Tailwind / React / Babel CDN；色值获取使用 Color Thief CDN；CSV 编辑器使用 Luckysheet / PapaParse CDN；Markdown 工具使用 Marked / Highlight.js / Mermaid 等 CDN。网络断开时 CDN 样式、图标或 ZIP 功能可能受影响。裁切工具若使用 UMI-OCR，还需本地 OCR HTTP 服务正常运行和浏览器允许访问。
 
 Maintained by [hong87LH](https://github.com/hong87LH).
