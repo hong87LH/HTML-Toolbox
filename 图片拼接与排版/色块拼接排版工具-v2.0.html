@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片并排拼接工具</title>
+    <!-- 引入 Tailwind CSS 引擎 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 核心库 -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用于在浏览器中实时编译 JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useCallback, useEffect } = React;
+
+        // --- 内置 SVG 图标组件 ---
+        const Upload = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        );
+        const Download = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        );
+        const Trash2 = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        );
+        const GripHorizontal = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/></svg>
+        );
+        const ImageIcon = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        );
+        const X = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        );
+        const ArrowDownToLine = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>
+        );
+        const Plus = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        );
+
+        // --- 主程序 ---
+        function App() {
+            const [groups, setGroups] = useState([]);
+            const [settings, setSettings] = useState({
+                rule: '9',
+                spacing: -100,
+                exportHeight: '400',
+                customHeight: 600,
+            });
+            
+            const [dragItem, setDragItem] = useState(null);
+            const [dragOverItem, setDragOverItem] = useState(null);
+            const [isDraggingOver, setIsDraggingOver] = useState(false);
+            const [isInternalDragging, setIsInternalDragging] = useState(false); // 区分是外部传图还是内部排序拖拽
+
+            useEffect(() => {
+                return () => {
+                    groups.forEach(g => g.images.forEach(img => URL.revokeObjectURL(img.url)));
+                };
+            }, []);
+
+            const getGroupKey = (filename, rule) => {
+                const cleanName = filename.split('.')[0];
+                if (rule === '7') return cleanName.substring(0, 7) || '未知货号';
+                if (rule === '9') return cleanName.substring(0, 9) || '未知货号';
+                return '未知货号';
+            };
+
+            const processFiles = useCallback((files) => {
+                const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+                if (validFiles.length === 0) return;
+
+                setGroups(prevGroups => {
+                    const newGroupsMap = new Map();
+                    prevGroups.forEach(g => newGroupsMap.set(g.id, { ...g, images: [...g.images] }));
+
+                    // 如果是不分组模式，为这一次拖拽进来的所有图片生成一个独立的批次组
+                    let batchId = null;
+                    if (settings.rule === 'all') {
+                        batchId = '排版组 ' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                    }
+
+                    validFiles.forEach(file => {
+                        const groupId = settings.rule === 'all' ? batchId : getGroupKey(file.name, settings.rule);
+                        const newImg = {
+                            id: Math.random().toString(36).substring(2, 9) + Date.now().toString(36),
+                            file,
+                            url: URL.createObjectURL(file),
+                            name: file.name
+                        };
+
+                        if (newGroupsMap.has(groupId)) {
+                            newGroupsMap.get(groupId).images.push(newImg);
+                        } else {
+                            newGroupsMap.set(groupId, {
+                                id: groupId,
+                                name: groupId, // 初始名称与ID一致，之后用户可改
+                                images: [newImg]
+                            });
+                        }
+                    });
+
+                    // 保持原有顺序，并将新加的组放在前面或后面。这里转换 Map 为 Array
+                    return Array.from(newGroupsMap.values());
+                });
+            }, [settings.rule]);
+
+            // 全局外部拖拽文件
+            const onDragOver = (e) => {
+                e.preventDefault();
+                if (!isInternalDragging) {
+                    setIsDraggingOver(true);
+                }
+            };
+
+            const onDragLeave = (e) => {
+                e.preventDefault();
+                if (!isInternalDragging) {
+                    setIsDraggingOver(false);
+                }
+            };
+
+            const onDrop = (e) => {
+                e.preventDefault();
+                setIsDraggingOver(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && !isInternalDragging) {
+                    processFiles(e.dataTransfer.files);
+                }
+            };
+
+            const handleFileInput = (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    processFiles(e.target.files);
+                }
+                e.target.value = null;
+            };
+
+            // 手动新建空白组
+            const handleAddEmptyGroup = () => {
+                const newId = '自定义组 ' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                setGroups(prev => [{ id: newId, name: newId, images: [] }, ...prev]);
+            };
+
+            // 修改排版组名称
+            const handleRenameGroup = (groupId, oldName) => {
+                const newName = prompt("请输入新的排版组名称（导出时将作为文件名）：", oldName);
+                if (newName && newName.trim()) {
+                    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, name: newName.trim() } : g));
+                }
+            };
+
+            // --- 内部拖拽排序核心逻辑 ---
+            const handleSortDragStart = (e, groupId, imgIndex) => {
+                setIsInternalDragging(true);
+                setDragItem({ groupId, imgIndex });
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
+            };
+
+            const handleSortDragEnter = (e, groupId, imgIndex) => {
+                e.preventDefault();
+                e.stopPropagation(); // 阻止冒泡到外层组容器
+                setDragOverItem({ groupId, imgIndex });
+            };
+
+            const handleGroupDragEnter = (e, groupId) => {
+                e.preventDefault();
+                if (!isInternalDragging || !dragItem) return;
+                
+                const group = groups.find(g => g.id === groupId);
+                if (group) {
+                    // 如果拖到组容器空白处，目标位置设为该组的末尾
+                    setDragOverItem({ groupId, imgIndex: group.images.length });
+                }
+            };
+
+            const handleSortDragEnd = (e) => {
+                e.target.style.opacity = '1';
+                setIsInternalDragging(false);
+
+                if (dragItem && dragOverItem) {
+                    setGroups(prev => {
+                        const newGroups = [...prev];
+                        const sourceGroupIndex = newGroups.findIndex(g => g.id === dragItem.groupId);
+                        const targetGroupIndex = newGroups.findIndex(g => g.id === dragOverItem.groupId);
+
+                        if (sourceGroupIndex === -1 || targetGroupIndex === -1) return prev;
+
+                        // 深拷贝源组和目标组，防止引用污染
+                        const sourceGroup = { ...newGroups[sourceGroupIndex], images: [...newGroups[sourceGroupIndex].images] };
+                        const targetGroup = sourceGroupIndex === targetGroupIndex 
+                            ? sourceGroup 
+                            : { ...newGroups[targetGroupIndex], images: [...newGroups[targetGroupIndex].images] };
+
+                        // 提取被拖拽的图片
+                        const draggedImg = sourceGroup.images[dragItem.imgIndex];
+                        // 从源组中删除
+                        sourceGroup.images.splice(dragItem.imgIndex, 1);
+                        
+                        // 插入到目标组中的目标位置
+                        targetGroup.images.splice(dragOverItem.imgIndex, 0, draggedImg);
+
+                        newGroups[sourceGroupIndex] = sourceGroup;
+                        if (sourceGroupIndex !== targetGroupIndex) {
+                            newGroups[targetGroupIndex] = targetGroup;
+                        }
+                        
+                        return newGroups;
+                    });
+                }
+                setDragItem(null);
+                setDragOverItem(null);
+            };
+
+            // --- 删除与清空逻辑 ---
+            const handleDeleteImage = (groupId, imgId) => {
+                setGroups(prev => {
+                    return prev.map(g => {
+                        if (g.id === groupId) {
+                            const updatedImages = g.images.filter(img => {
+                                if (img.id === imgId) {
+                                    URL.revokeObjectURL(img.url);
+                                    return false;
+                                }
+                                return true;
+                            });
+                            return { ...g, images: updatedImages };
+                        }
+                        return g;
+                    });
+                    // 此处不再自动剔除空组，允许用户保留空画布
+                });
+            };
+
+            const handleDeleteGroup = (groupId) => {
+                setGroups(prev => {
+                    const groupToDelete = prev.find(g => g.id === groupId);
+                    if (groupToDelete) {
+                        groupToDelete.images.forEach(img => URL.revokeObjectURL(img.url));
+                    }
+                    return prev.filter(g => g.id !== groupId);
+                });
+            };
+
+            const handleClearAll = () => {
+                if(confirm("确定要清空所有排版内容吗？")) {
+                    groups.forEach(g => g.images.forEach(img => URL.revokeObjectURL(img.url)));
+                    setGroups([]);
+                }
+            };
+
+            // --- 导出逻辑 ---
+            const PREVIEW_HEIGHT = 192;
+            const currentTargetHeight = settings.exportHeight === 'custom' 
+                ? (parseInt(settings.customHeight) || 600) 
+                : parseInt(settings.exportHeight);
+            const previewSpacing = (parseInt(settings.spacing) || 0) * (PREVIEW_HEIGHT / currentTargetHeight);
+
+            const exportGroup = async (group) => {
+                if (group.images.length === 0) {
+                    alert("该排版组为空，无法导出！");
+                    return;
+                }
+
+                const targetHeight = settings.exportHeight === 'custom' 
+                ? parseInt(settings.customHeight) 
+                : parseInt(settings.exportHeight);
+
+                if (!targetHeight || isNaN(targetHeight)) {
+                    alert("请输入有效的导出高度");
+                    return;
+                }
+
+                const spacing = parseInt(settings.spacing) || 0;
+
+                try {
+                    const loadedImages = await Promise.all(group.images.map(img => {
+                        return new Promise((resolve, reject) => {
+                            const imageElement = new Image();
+                            imageElement.onload = () => resolve({ imgElement: imageElement, data: img });
+                            imageElement.onerror = () => reject(new Error(`Failed to load ${img.name}`));
+                            imageElement.src = img.url;
+                        });
+                    }));
+
+                    let currentX = 0;
+                    let maxX = 0;
+                    
+                    const positions = loadedImages.map((item, index) => {
+                        const scale = targetHeight / item.imgElement.naturalHeight;
+                        const scaledWidth = item.imgElement.naturalWidth * scale;
+                        
+                        const x = index === 0 ? 0 : currentX + spacing;
+                        currentX = x + scaledWidth;
+                        maxX = Math.max(maxX, currentX);
+                        
+                        return { x, scaledWidth, imgElement: item.imgElement };
+                    });
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = Math.max(maxX, 1);
+                    canvas.height = targetHeight;
+
+                    positions.forEach(pos => {
+                        ctx.drawImage(pos.imgElement, pos.x, 0, pos.scaledWidth, targetHeight);
+                    });
+
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `${group.name}_排版导出.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                } catch (error) {
+                    console.error("Export failed:", error);
+                    alert(`导出 ${group.name} 失败，请检查图片是否正常。`);
+                }
+            };
+
+            const handleBatchExport = async () => {
+                const groupsToExport = groups.filter(g => g.images.length > 0);
+                if (groupsToExport.length === 0) return;
+                
+                for (let i = 0; i < groupsToExport.length; i++) {
+                    await exportGroup(groupsToExport[i]);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            };
+
+            return (
+                <div 
+                    className="min-h-screen bg-gray-50 text-gray-800 font-sans p-6"
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onDrop={onDrop}
+                >
+                {isDraggingOver && (
+                    <div className="fixed inset-0 z-50 bg-blue-500 bg-opacity-20 border-4 border-blue-500 border-dashed m-4 rounded-xl flex items-center justify-center pointer-events-none transition-all">
+                        <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+                            <Upload className="w-16 h-16 text-blue-500 mb-4 animate-bounce" />
+                            <h2 className="text-2xl font-bold text-gray-700">松开鼠标即可导入图片</h2>
+                        </div>
+                    </div>
+                )}
+
+                <div className="max-w-7xl mx-auto space-y-6">
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
+                            <ImageIcon className="text-blue-500" />
+                            图片并排拼接工具
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1">拖拽图片进网页即可自动排版。支持跨组随意拖拽图片！</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700">货号规则:</label>
+                                <select 
+                                    value={settings.rule}
+                                    onChange={(e) => setSettings({...settings, rule: e.target.value})}
+                                    className="border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white"
+                                >
+                                    <option value="9">前9位字符</option>
+                                    <option value="7">前7位字符</option>
+                                    <option value="all">不分组 (每次拖入新建一组)</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700">间距(px):</label>
+                                <input 
+                                    type="number" 
+                                    value={settings.spacing}
+                                    onChange={(e) => setSettings({...settings, spacing: e.target.value})}
+                                    className="border border-gray-300 rounded px-2 py-1 w-20 text-sm outline-none focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700">导出高度:</label>
+                                <select 
+                                    value={settings.exportHeight}
+                                    onChange={(e) => setSettings({...settings, exportHeight: e.target.value})}
+                                    className="border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white"
+                                >
+                                    <option value="400">400px</option>
+                                    <option value="800">800px</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                                {settings.exportHeight === 'custom' && (
+                                    <input 
+                                        type="number" 
+                                        value={settings.customHeight}
+                                        onChange={(e) => setSettings({...settings, customHeight: e.target.value})}
+                                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm outline-none focus:border-blue-500 ml-1"
+                                        placeholder="高度"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <label className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 border border-blue-200 shadow-sm">
+                                <Upload size={18} />
+                                选择图片
+                                <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileInput} />
+                            </label>
+                            
+                            <React.Fragment>
+                                <button 
+                                    onClick={handleAddEmptyGroup}
+                                    className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm border border-gray-300"
+                                >
+                                    <Plus size={18} />
+                                    新建排版组
+                                </button>
+                                {groups.length > 0 && (
+                                    <button 
+                                        onClick={handleBatchExport}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm"
+                                    >
+                                        <ArrowDownToLine size={18} />
+                                        批量导出
+                                    </button>
+                                )}
+                                {groups.length > 0 && (
+                                    <button 
+                                        onClick={handleClearAll}
+                                        className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm border border-red-200"
+                                    >
+                                        清空
+                                    </button>
+                                )}
+                            </React.Fragment>
+                        </div>
+                    </div>
+
+                    {groups.length === 0 ? (
+                        <div className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-96 flex flex-col items-center justify-center text-gray-400">
+                            <Upload className="w-16 h-16 mb-4 text-gray-300" />
+                            <p className="text-lg font-medium">将图片拖拽到此处开始处理</p>
+                            <p className="text-sm mt-2">支持多选，或直接点击上方“新建排版组”手动组装</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {groups.map((group) => (
+                                <div key={group.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                                    
+                                    <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex justify-between items-center group/header">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <span 
+                                                className="font-bold text-lg text-gray-800 bg-white px-3 py-1 rounded shadow-sm border border-gray-100 truncate max-w-[200px] cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors" 
+                                                title="点击修改名称"
+                                                onClick={() => handleRenameGroup(group.id, group.name)}
+                                            >
+                                                {group.name}
+                                            </span>
+                                            <span className="text-sm text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                {group.images.length} 张
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button 
+                                                onClick={() => exportGroup(group)}
+                                                className="text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors shadow-sm"
+                                            >
+                                                <Download size={16} /> 导出
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteGroup(group.id)}
+                                                className="text-sm bg-white border border-red-200 hover:bg-red-50 text-red-500 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors shadow-sm opacity-60 hover:opacity-100"
+                                            >
+                                                <Trash2 size={16} /> 删除
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div 
+                                        className="p-6 overflow-x-auto flex-1 relative"
+                                        style={{ background: 'repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%) 50% / 16px 16px' }}
+                                        onDragEnter={(e) => handleGroupDragEnter(e, group.id)}
+                                        onDragOver={(e) => e.preventDefault()}
+                                    >
+                                        <div className="flex items-center" style={{ minHeight: '220px' }}>
+                                            {group.images.length === 0 ? (
+                                                <div 
+                                                    className={`w-full h-full flex items-center justify-center border-2 border-dashed rounded-lg transition-colors
+                                                        ${dragOverItem && dragOverItem.groupId === group.id ? 'border-blue-500 bg-blue-50 text-blue-500' : 'border-gray-300 text-gray-400 bg-white bg-opacity-50'}`} 
+                                                    style={{ minHeight: '180px' }}
+                                                >
+                                                    将图片拖拽至此组
+                                                </div>
+                                            ) : (
+                                                group.images.map((img, index) => (
+                                                    <div 
+                                                        key={img.id}
+                                                        draggable
+                                                        onDragStart={(e) => handleSortDragStart(e, group.id, index)}
+                                                        onDragEnter={(e) => handleSortDragEnter(e, group.id, index)}
+                                                        onDragEnd={handleSortDragEnd}
+                                                        onDragOver={(e) => e.preventDefault()}
+                                                        style={{ 
+                                                            marginLeft: index === 0 ? 0 : `${previewSpacing}px`,
+                                                            zIndex: index 
+                                                        }}
+                                                        className={`relative group/item flex-shrink-0 cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-2
+                                                            ${dragOverItem && dragOverItem.groupId === group.id && dragOverItem.imgIndex === index ? 'scale-105 opacity-80' : ''}
+                                                        `}
+                                                    >
+                                                        <div className="relative">
+                                                            <img 
+                                                                src={img.url} 
+                                                                alt={img.name} 
+                                                                className="h-48 w-auto object-contain select-none pointer-events-none drop-shadow-md" 
+                                                            />
+                                                        </div>
+
+                                                        <div className="absolute top-2 right-2 opacity-0 group-hover/item:opacity-100 transition-opacity flex flex-col gap-1 z-50">
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteImage(group.id, img.id); }}
+                                                                className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md"
+                                                                title="删除图片"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-black bg-opacity-50 text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs backdrop-blur-sm pointer-events-none z-50 whitespace-nowrap">
+                                                            <GripHorizontal size={12} /> 拖拽排序
+                                                        </div>
+
+                                                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold z-50 pointer-events-none">
+                                                            {index + 1}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                </div>
+            );
+        }
+
+        // 挂载应用
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
