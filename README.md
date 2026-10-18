@@ -6,14 +6,14 @@
 
 | 工具 | 常用度 | 简介 | 在线体验 | HTML 源文件 |
 | --- | :---: | --- | --- | --- |
-| **图片实时对比工具** · v1.1 | ★★★★★ | 多版本对比、三态差异高亮（常规 / 黑底 / ΔE2000 热力图）、临时热力图缓存 | [打开体验 ↗](https://www.showyourcode.app/share/qglr1umvdox0cy) | [查看](./图片预览与对比/图片实时对比工具.html) |
-| **移动端三模式图片预览** | ★★★★★ | 拖拽多张详情图，切换默认、天猫和京东预览方式 | [打开体验 ↗](https://www.showyourcode.app/zh/share/9d248f9e-dd87-4ac8-b366-741d319b6338) | [查看](./图片预览与对比/移动端三模式图片预览.html) |
+| **图片实时对比工具** · v1.1 | ★★★★★ | 多版本对比、三态差异高亮（常规 / 黑底 / ΔE2000 热力图）、临时热力图缓存 | [体验](https://www.showyourcode.app/share/qglr1umvdox0cy) | [查看](./图片预览与对比/图片实时对比工具.html) |
+| **移动端三模式图片预览** | ★★★★★ | 拖拽多张详情图，切换默认、天猫和京东预览方式 | [体验](https://www.showyourcode.app/zh/share/9d248f9e-dd87-4ac8-b366-741d319b6338) | [查看](./图片预览与对比/移动端三模式图片预览.html) |
 | **自定义裁切工具 · Slice Studio** | ★★★★★ | 三栏切片工作台、图片批处理、OCR 命名、PNG/JPG/ZIP 导出，支持导入裁切 JSON | 暂未提供 | [查看](./自定义裁切/自定义裁切工具.html) |
 | **CSV 编辑器** | ★★★★★ | Excel 式 CSV 编辑、公式转数值、按选中列去重、导出 CSV | 暂未提供 | [查看](./数据表格编辑/CSV编辑器.html) |
-| **Markdown 编辑与预览工具** · 标准 CDN | ★★★★☆ | Markdown 编辑、实时预览、目录导航、代码高亮及 Mermaid 图表 | [在线体验 ↗](https://www.showyourcode.app/share/1c80ab11-4f4a-4b47-baf3-425d4df2ee58) | [查看](./Markdown编辑与预览/Markdown预览工具-标准CDN.html) |
-| **Markdown 编辑与预览工具** · 国内镜像 CDN | ★★★★☆ | 与标准版功能相同，部分 CDN 地址改用国内镜像，便于国内网络环境尝试 | [在线体验 ↗](https://www.showyourcode.app/share/1c80ab11-4f4a-4b47-baf3-425d4df2ee58) | [查看](./Markdown编辑与预览/Markdown预览工具-国内镜像CDN.html) |
-| **色块拼接排版工具** · v2.0 | ★★★☆☆ | 图片横向拼接、按货号前 7/9 位分组、跨组拖拽排序、重叠间距与自定义高度、逐组及批量 PNG 导出 | [在线体验 ↗](https://www.showyourcode.app/share/370f3adc-b938-4057-bf07-714a34acd9b9) | [查看](./图片拼接与排版/色块拼接排版工具-v2.0.html) |
-| **色值获取 · 色彩分析 Pro** | ★★☆☆☆ | 拖入多张图片提取 6 色调色板、局部框选取色、色阶增强对比及整体平均色，点击色块复制 HEX | [在线体验 ↗](https://www.showyourcode.app/share/9c90eb54-d8e8-4364-b55f-d21e126c69dd) | [查看](./色彩分析与取色/获取色值.html) |
+| **Markdown 编辑与预览工具** · 标准 CDN | ★★★★☆ | Markdown 编辑、实时预览、目录导航、代码高亮及 Mermaid 图表 | [体验](https://www.showyourcode.app/share/1c80ab11-4f4a-4b47-baf3-425d4df2ee58) | [查看](./Markdown编辑与预览/Markdown预览工具-标准CDN.html) |
+| **Markdown 编辑与预览工具** · 国内镜像 CDN | ★★★★☆ | 与标准版功能相同，部分 CDN 地址改用国内镜像，便于国内网络环境尝试 | [体验](https://www.showyourcode.app/share/1c80ab11-4f4a-4b47-baf3-425d4df2ee58) | [查看](./Markdown编辑与预览/Markdown预览工具-国内镜像CDN.html) |
+| **色块拼接排版工具** · v2.0 | ★★★☆☆ | 图片横向拼接、按货号前 7/9 位分组、跨组拖拽排序、重叠间距与自定义高度、逐组及批量 PNG 导出 | [体验](https://www.showyourcode.app/share/370f3adc-b938-4057-bf07-714a34acd9b9) | [查看](./图片拼接与排版/色块拼接排版工具-v2.0.html) |
+| **色值获取 · 色彩分析 Pro** | ★★☆☆☆ | 拖入多张图片提取 6 色调色板、局部框选取色、色阶增强对比及整体平均色，点击色块复制 HEX | [体验](https://www.showyourcode.app/share/9c90eb54-d8e8-4364-b55f-d21e126c69dd) | [查看](./色彩分析与取色/获取色值.html) |
 | **PPT 详情页切片整理** · v4 | ★★☆☆☆ | 批量缩放、底部白边裁切、拖拽排序、重命名及 JPG/ZIP 导出（与自定义裁切独立） | 暂未提供 | [查看](./PPT详情页整理/PPT详情页切片整理.html) |
 
 > **常用度：** 根据日常使用频率人工标注，五星为最常用；不代表工具质量评分。
