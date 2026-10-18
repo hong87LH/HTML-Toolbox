@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端图片预览</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            padding: 0;
+            max-width: 100%;
+            font-size: 0; /* 消除图片间可能的间隙 */
+        }
+        
+        img {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0; /* 移除间距 */
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .controls {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .controls button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .controls button:hover {
+            background-color: #45a049;
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 0 auto 20px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+        
+        .drop-zone:hover, .drop-zone.active {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+        
+        .drop-zone p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        #selectFilesBtn {
+            background-color: #007bff; /* 蓝色 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        #selectFilesBtn:hover {
+            background-color: #0056b3;
+        }
+        #clearBtn {
+            background-color: #28a745; /* 绿色 */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+        #clearBtn:hover {
+            background-color: #218838;
+        }
+        .drop-zone-buttons {
+            margin-top: 15px;
+        }
+        
+        .drop-zone.shrunk {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: auto;
+            max-width: 800px; /* 与.page-container的max-width保持一致 */
+            padding: 10px 20px; /* 调整内边距 */
+            border-radius: 0;
+            background-color: #f8f8f8;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000; /* Ensure it's above other content */
+            display: flex;
+            justify-content: space-between; /* 两端对齐 */
+            align-items: center;
+            flex-direction: row;
+            height: auto;
+            min-height: auto;
+            margin: 0 auto; /* 居中 */
+            box-sizing: border-box;
+            flex-wrap: wrap; /* 允许内容换行 */
+            gap: 10px; /* 元素间距 */
+        }
+        .drop-zone.shrunk p {
+            margin: 0;
+            font-size: 14px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .drop-zone.shrunk .right-controls {
+            display: flex;
+            flex-direction: row; /* Keep as row for internal controls */
+            align-items: center;
+            gap: 5px; /* 内部控件间距 */
+            flex-shrink: 0;
+            margin-top: 0;
+            flex-wrap: wrap; /* 允许内部控件换行 */
+            justify-content: flex-end; /* 靠右对齐 */
+        }
+        .drop-zone.shrunk .drop-zone-buttons {
+            margin-top: 0;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .drop-zone.shrunk .mode-switcher {
+            display: flex;
+            gap: 5px;
+            margin-top: 0;
+            margin-left: 0;
+        }
+        @media (max-width: 480px) {
+            .drop-zone.shrunk .image-count {
+                display: none;
+            }
+        }
+        .drop-zone.shrunk .image-count {
+            margin: 0;
+            font-size: 14px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        /* When drop-zone is shrunk, adjust padding for imageContainer */
+        body.has-fixed-header #imageContainer {
+            padding-top: 80px; /* 根据置顶区域的新高度调整 */
+        }
+        #imageContainer {
+            margin-top: 20px;
+            padding-top: 0; /* 初始状态不需要额外的顶部内边距 */
+        }
+        
+        /* 当drop-zone缩小并置顶时，为内容添加额外的顶部内边距，防止内容被覆盖 */
+        body.has-fixed-header #imageContainer {
+            padding-top: 80px; /* 根据置顶区域的新高度调整 */
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .image-count {
+            color: #666;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+        
+        .page-container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* Mode Switcher Styles */
+        .mode-switcher {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px; /* Add top margin to separate from other buttons */
+            margin-left: 0; /* Remove left margin for centering */
+        }
+        .mode-btn {
+            background-color: #e0e0e0;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .mode-btn:hover:not(.active) {
+            background-color: #d0d0d0;
+        }
+
+        /* Tmall Mode Styles */
+        body.tmall-mode {
+            background-color: #fafafa; /* 天猫预览背景色 */
+        }
+        .tmall-mode .container {
+            padding: 10px;
+        }
+        .tmall-mode .image-wrapper {
+            margin-bottom: 20px;
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
+        }
+        .tmall-mode .image-wrapper img {
+            border-radius: 10px;
+        }
+
+        /* JD Mode Styles */
+        body.jd-mode {
+            background-color: #f6f6f6; /* 京东预览背景色 */
+        }
+        /* Remove the unused .jd-mode .background-header rule */
+        /*
+        .jd-mode .background-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-image: url('./images/header-bg.png');
+            background-size: contain;
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-color: #f6f6f6;
+            z-index: 1;
+            pointer-events: none;
+        }
+        */
+        .jd-mode .container {
+            padding: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .jd-mode .image-wrapper {
+            margin-bottom: 10px;
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
+            background-color: transparent;
+        }
+        .jd-mode .image-wrapper.sticky {
+            transition: position 0.3s;
+        }
+        .jd-mode .image-wrapper.fixed {
+            position: fixed;
+            top: 80px; /* 固定在拖拽区域下方 */
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 20px);
+            max-width: 800px;
+            z-index: 1001;
+            border-radius: 0 0 10px 10px;
+        }
+        .jd-mode .image-wrapper.fixed img {
+            border-radius: 0 0 10px 10px;
+        }
+        .jd-mode .image-wrapper img {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="drop-zone" id="dropZone">
+            <p>拖放图片文件到这里</p>
+            <div class="right-controls">
+                <div class="drop-zone-buttons">
+                    <button id="selectFilesBtn">选择图片</button>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                    <button id="clearBtn">清除图片</button>
+                </div>
+                <div class="mode-switcher">
+                    <button id="modeDefaultBtn" class="mode-btn active">默认</button>
+                    <button id="modeTmallBtn" class="mode-btn">天猫</button>
+                    <button id="modeJdBtn" class="mode-btn">京东</button>
+                </div>
+                <span class="image-count" id="imageCount"></span> <!-- Moved back here -->
+            </div>
+        </div>
+        
+        <div class="container" id="imageContainer">
+            <div class="loading">请选择或拖放图片文件</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageContainer = document.getElementById('imageContainer');
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const selectFilesBtn = document.getElementById('selectFilesBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const imageCountElement = document.getElementById('imageCount');
+            const modeDefaultBtn = document.getElementById('modeDefaultBtn');
+            const modeTmallBtn = document.getElementById('modeTmallBtn');
+            const modeJdBtn = document.getElementById('modeJdBtn');
+
+            let loadedImages = [];
+            let headerBgImage = null; // To store header-bg.png if found
+            let currentMode = 'default'; // 'default', 'tmall', 'jd'
+            let firstImageWrapper = null;
+            let firstImagePosition = 0;
+
+            // Mode switching event listeners
+            modeDefaultBtn.addEventListener('click', () => switchMode('default'));
+            modeTmallBtn.addEventListener('click', () => switchMode('tmall'));
+            modeJdBtn.addEventListener('click', () => switchMode('jd'));
+
+            function switchMode(mode) {
+                currentMode = mode;
+                document.body.className = ''; // Clear existing mode classes
+                document.body.classList.add(mode + '-mode');
+
+                // Update active button state
+                document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1) + 'Btn').classList.add('active');
+
+                // Re-render images to apply new styles
+                if (loadedImages.length > 0 || headerBgImage) {
+                    renderImages();
+                } else {
+                    imageContainer.innerHTML = '<div class="loading">请选择或拖放图片文件</div>';
+                }
+                // Reset JD sticky header if not in JD mode
+                if (currentMode !== 'jd') {
+                    if (firstImageWrapper) {
+                        firstImageWrapper.classList.remove('fixed');
+                    }
+                    window.removeEventListener('scroll', handleJdStickyHeader);
+                    // Clear background image if not in JD mode
+                    document.body.style.backgroundImage = '';
+                    document.body.style.backgroundSize = '';
+                    document.body.style.backgroundPosition = '';
+                    document.body.style.backgroundRepeat = '';
+                    document.body.style.backgroundAttachment = '';
+                } else {
+                    // Re-attach JD sticky header listener if in JD mode and images are loaded
+                    if (loadedImages.length > 0) {
+                        window.addEventListener('scroll', handleJdStickyHeader);
+                        // Recalculate position if images are already loaded
+                        if (firstImageWrapper) {
+                            firstImagePosition = firstImageWrapper.offsetTop;
+                            handleJdStickyHeader(); // Apply sticky state immediately
+                        }
+                    }
+                    // Apply header-bg.png if in JD mode and available
+                    if (headerBgImage) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.body.style.backgroundImage = `url(${e.target.result})`;
+                            document.body.style.backgroundSize = 'contain';
+                            document.body.style.backgroundPosition = 'top center'; // Changed from bottom center
+                            document.body.style.backgroundRepeat = 'no-repeat';
+                            document.body.style.backgroundAttachment = 'fixed'; // Keep background fixed
+                        };
+                        reader.readAsDataURL(headerBgImage);
+                    }
+                }
+            }
+
+            // 文件选择按钮点击事件
+            selectFilesBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 清除按钮点击事件
+            clearBtn.addEventListener('click', function() {
+                clearImages();
+            });
+
+            // 文件选择事件
+            fileInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            });
+
+            // 拖放区域事件
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.classList.add('active');
+            });
+
+            dropZone.addEventListener('dragleave', function() {
+                dropZone.classList.remove('active');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('active');
+
+                const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            });
+
+            // 处理文件函数
+            function processFiles(files) {
+                // 清除现有图片
+                clearImages();
+
+                // 过滤出图片文件
+                const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+                if (imageFiles.length === 0) {
+                    imageContainer.innerHTML = '<div class="loading">未找到图片文件</div>';
+                    return;
+                }
+
+                // Separate header-bg.png if present
+                const regularImages = imageFiles.filter(file => file.name !== 'header-bg.png');
+                headerBgImage = imageFiles.find(file => file.name === 'header-bg.png');
+
+                // 更新图片计数
+                updateImageCount(regularImages.length);
+
+                // 按文件名排序（考虑数字顺序）
+                const sortableFiles = Array.from(regularImages).map(file => {
+                    const name = file.name.split('.')[0];
+                    const numMatch = name.match(/\d+/);
+                    const numValue = numMatch ? parseInt(numMatch[0]) : 0;
+
+                    return {
+                        file: file,
+                        name: name,
+                        numValue: numValue
+                    };
+                });
+
+                sortableFiles.sort((a, b) => {
+                    if (a.numValue !== b.numValue) {
+                        return a.numValue - b.numValue;
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                // 存储排序后的文件列表
+                loadedImages = sortableFiles.map(item => item.file);
+
+                // 渲染图片
+                renderImages();
+            }
+
+            // 渲染图片函数 (取代原来的 loadImages)
+            function renderImages() {
+                imageContainer.innerHTML = ''; // Clear existing images
+                firstImageWrapper = null; // Reset first image wrapper
+
+                if (loadedImages.length === 0 && !headerBgImage) {
+                    imageContainer.innerHTML = '<div class="loading">请选择或拖放图片文件</div>';
+                    return;
+                }
+
+                // Handle header-bg.png for JD mode
+                if (currentMode === 'jd' && headerBgImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.body.style.backgroundImage = `url(${e.target.result})`;
+                        document.body.style.backgroundSize = 'contain';
+                        document.body.style.backgroundPosition = 'top center'; // Changed from bottom center
+                        document.body.style.backgroundRepeat = 'no-repeat';
+                        document.body.style.backgroundAttachment = 'fixed';
+                    };
+                    reader.readAsDataURL(headerBgImage);
+                } else {
+                    document.body.style.backgroundImage = '';
+                    document.body.style.backgroundSize = '';
+                    document.body.style.backgroundPosition = '';
+                    document.body.style.backgroundRepeat = '';
+                    document.body.style.backgroundAttachment = '';
+                }
+
+                const imgElements = [];
+
+                loadedImages.forEach((file, index) => {
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = `图片 ${index + 1}`;
+                        img.dataset.filename = file.name;
+                        img.dataset.index = index;
+
+                        const imageWrapper = document.createElement('div');
+                        imageWrapper.className = 'image-wrapper';
+                        imageWrapper.appendChild(img);
+
+                        if (currentMode === 'jd' && index === 0) {
+                            imageWrapper.classList.add('sticky');
+                            firstImageWrapper = imageWrapper;
+                        }
+
+                        imgElements[index] = imageWrapper;
+
+                        if (imgElements.filter(Boolean).length === loadedImages.length) {
+                            imgElements.forEach(wrapper => {
+                                imageContainer.appendChild(wrapper);
+                            });
+                            dropZone.classList.add('shrunk');
+                            document.body.classList.add('has-fixed-header');
+
+                            // Initialize JD sticky header if in JD mode
+                            if (currentMode === 'jd' && firstImageWrapper) {
+                                firstImagePosition = firstImageWrapper.offsetTop;
+                                window.addEventListener('scroll', handleJdStickyHeader);
+                                handleJdStickyHeader(); // Apply sticky state immediately
+                            }
+                        }
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // 清除图片函数
+            function clearImages() {
+                imageContainer.innerHTML = '<div class="loading">请选择或拖放图片文件</div>';
+                loadedImages = [];
+                headerBgImage = null; // Clear header background image
+                updateImageCount(0);
+                fileInput.value = '';
+                dropZone.classList.remove('shrunk');
+                document.body.classList.remove('has-fixed-header');
+                document.body.className = ''; // Clear mode classes
+                document.body.style.backgroundImage = ''; // Clear background image
+                document.body.style.backgroundSize = '';
+                document.body.style.backgroundPosition = '';
+                document.body.style.backgroundRepeat = '';
+                document.body.style.backgroundAttachment = '';
+                document.getElementById('modeDefaultBtn').classList.add('active'); // Reset active mode button
+                firstImageWrapper = null;
+                window.removeEventListener('scroll', handleJdStickyHeader);
+            }
+
+            // 更新图片计数
+            function updateImageCount(count) {
+                imageCountElement.textContent = count > 0 ? `已加载 ${count} 张图片` : '';
+            }
+
+            // JD Sticky Header Logic
+            function handleJdStickyHeader() {
+                if (firstImageWrapper) {
+                    if (window.pageYOffset >= firstImagePosition) {
+                        firstImageWrapper.classList.add('fixed');
+                    } else {
+                        firstImageWrapper.classList.remove('fixed');
+                    }
+                }
+            }
+
+            // Initial mode setting
+            switchMode('default');
+        });
+    </script>
+</body>
+</html>
