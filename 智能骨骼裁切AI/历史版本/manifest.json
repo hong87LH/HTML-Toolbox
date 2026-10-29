@@ -1,0 +1,167 @@
+{
+  "current_version": "1.1.14",
+  "published_date": "2026-10-29",
+  "files": [
+    {
+      "target": "智能骨骼裁切AI/Hong_AI_浏览器工作台.html",
+      "version": "1.1.14",
+      "bytes": 13298464,
+      "sha256": "bbae0d0516b484212d18c26b0578e8f7e76d36fe3a33ffb44e6154e580384eb3",
+      "git_sha": "4ec960e1521b8e480cc837d42e0cca2b9742d1ae"
+    },
+    {
+      "target": "智能骨骼裁切AI/智能裁切工作台_完整使用指南.html",
+      "version": "1.1.14",
+      "bytes": 103782,
+      "sha256": "0e271876f3f46c5d9909c56571942633481cba2219f907b6e38f48b10449a264",
+      "git_sha": "cd1a15a93c8f5febdbab5be0b85c2c9a3e0ae0b5"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.10/Hong_AI_浏览器工作台_v1.1.10.html",
+      "version": "1.1.10",
+      "bytes": 13286207,
+      "sha256": "b603c032045055ac7b23a801bba9d394ea244303998da0e309a67c6c90ad63fe",
+      "git_sha": "2cf360397bfada3e4a061855b07c67f5d75f2be1"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.10/智能裁切工作台_完整使用指南_v1.1.10.html",
+      "version": "1.1.10",
+      "bytes": 100317,
+      "sha256": "18d2b2694f2f311695c5a654205396a7ecedfa81bcfe8f77571f13bdf52b559d",
+      "git_sha": "185d71b20766fcde35bffbd1d7d25a8e5484d426"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.11/Hong_AI_浏览器工作台_v1.1.11.html",
+      "version": "1.1.11",
+      "bytes": 13293739,
+      "sha256": "811555c1d995cb666724eba9ca392ebca22e3a3ecc009b0df94a7cc10ed8d62d",
+      "git_sha": "8894c6c00a272b07c77a6d3a7b0b833ef39100a4"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.11/智能裁切工作台_完整使用指南_v1.1.11.html",
+      "version": "1.1.11",
+      "bytes": 102707,
+      "sha256": "d7ddc3737c893bd158b74c5f0d54829c1cef0a5edece37bc7bcd3ed70b9a5835",
+      "git_sha": "94251c7e33a9360895815f2ac71861679370ffa5"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.12/Hong_AI_浏览器工作台_v1.1.12.html",
+      "version": "1.1.12",
+      "bytes": 13296137,
+      "sha256": "dd0466556fd1e2422fc9d1a06b1de7d7bfc7b4e8a8b11c48ff27cf6e472d33c8",
+      "git_sha": "5cd00eafc7cf9d82be90804f9eab31fba8c8277f"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.12/智能裁切工作台_完整使用指南_v1.1.12.html",
+      "version": "1.1.12",
+      "bytes": 103350,
+      "sha256": "93b914c973c6139bb2e1b2cb6ee9565581a6d03215e5026fb0483950a241a88d",
+      "git_sha": "38a6ad81dfed82c98ad9a99714ae0c5ae3b93304"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.13/Hong_AI_浏览器工作台_v1.1.13.html",
+      "version": "1.1.13",
+      "bytes": 13296217,
+      "sha256": "731ac5e6fa03b990344cb1659dec812151d502137bedb9c91744ddef19c99a85",
+      "git_sha": "64a624dbc75e8522a5000e0b52132bcd33c917e7"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.13/智能裁切工作台_完整使用指南_v1.1.13.html",
+      "version": "1.1.13",
+      "bytes": 103350,
+      "sha256": "708916bd6e81c061e269925c6d7ced19082f5a115f1bd85a6c1fcddfaf90ab28",
+      "git_sha": "3fc2d15a5f8d41eaf6ef7b0a0e6c8af0f38a0e14"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.5/Hong_AI_浏览器工作台_v1.1.5.html",
+      "version": "1.1.5",
+      "bytes": 13279533,
+      "sha256": "688328767189f45de7b43cbc95c3520ee80e3717b14fc8601131e3ff7ccd1939",
+      "git_sha": "999ae22f084bacf1f5ae24427123b8efc3cd0f67"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.5/智能裁切工作台_完整使用指南_v1.1.5.html",
+      "version": "1.1.5",
+      "bytes": 97572,
+      "sha256": "95cf161c4745f575acdb87eefd66d89e7f2c54f2802dc6a90bc7c989f1d57027",
+      "git_sha": "d63ca051d0354c5da4c10d4d0bcc97d559a6dfe8"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.6/Hong_AI_浏览器工作台_v1.1.6.html",
+      "version": "1.1.6",
+      "bytes": 13280025,
+      "sha256": "b75c68d253d33f72e8fff80666b38609d0eb385eb37299eec20daac9b43c5b7f",
+      "git_sha": "0ddc8afd65671f926f326879ed00b0b033da9c8b"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.6/智能裁切工作台_完整使用指南_v1.1.6.html",
+      "version": "1.1.6",
+      "bytes": 98150,
+      "sha256": "062e621e06a1acdd47b0999b6074a5ba3470c656c8f0e33a7c92b53a834d3a05",
+      "git_sha": "009ff5b80061e593d12bbc77829b197e9ca7fcd6"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.7/Hong_AI_浏览器工作台_v1.1.7.html",
+      "version": "1.1.7",
+      "bytes": 13280053,
+      "sha256": "d1b56f1101dc3175b8eac3f1b711cbbad525606aad1fda8094156aeb372301be",
+      "git_sha": "9dd5dd015733130628631ab89df91a290a27ee8f"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.7/智能裁切工作台_完整使用指南_v1.1.7.html",
+      "version": "1.1.7",
+      "bytes": 98150,
+      "sha256": "62477ce159a83c26df1c3734f382c4c6208d6b445ca528ebf44e9b777ea57165",
+      "git_sha": "a7e92091b2bd0dd490b1d5528de8e4317713070a"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.8/Hong_AI_浏览器工作台_v1.1.8.html",
+      "version": "1.1.8",
+      "bytes": 13285734,
+      "sha256": "dcef309912b0c3d3347dfd2797dcd1d1e0fc375925d0be8e451eb70deacabe79",
+      "git_sha": "1139d93dbe9d248b7c0fdafb611febd8f907c129"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.8/智能裁切工作台_完整使用指南_v1.1.8.html",
+      "version": "1.1.8",
+      "bytes": 99922,
+      "sha256": "2e5b3b3452b576c214ebd1415f26adc4691c32f15be390eda23684a3027b2de4",
+      "git_sha": "f5fbefacd4bbf903756f219b5ef7e5217862a6a7"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.9/Hong_AI_浏览器工作台_v1.1.9.html",
+      "version": "1.1.9",
+      "bytes": 13286059,
+      "sha256": "84eaf6e276518d123cbec1b3bdf4a86b1256d5213fb21ae5adf9921f41e46f11",
+      "git_sha": "cf4b6efe212659ebe35e3c0da9778b461ae01292"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.1.9/智能裁切工作台_完整使用指南_v1.1.9.html",
+      "version": "1.1.9",
+      "bytes": 100313,
+      "sha256": "4f92e66f55a77515666f897784a98d2a6cdf00e1446435e0e98543f5193d31ea",
+      "git_sha": "4d2df9db3617ce87ceb7a65862775ef4bb1a3f5c"
+    },
+    {
+      "target": "智能骨骼裁切AI/历史版本/v1.0.0/Hong_AI_浏览器工作台_v1.0.0.html",
+      "version": "1.0.0",
+      "bytes": 13274858,
+      "sha256": "fc8866ce727e1a71274b0d30c1b6c3cec0a0c50cc0399eca39924194753d4aac",
+      "git_sha": "fed23f10725ba5b2972f1f046b91e2589a8495ab"
+    }
+  ],
+  "original_repository_files": [
+    {
+      "path": "智能骨骼裁切AI/历史版本/原仓库基线-2026-10-26/Hong_AI_浏览器工作台.html",
+      "git_sha": "fe20ef0cabcdcaf3e355818c49aa22c9d0c7c9e2"
+    },
+    {
+      "path": "智能骨骼裁切AI/历史版本/原仓库基线-2026-10-26/智能裁切工作台_完整使用指南.html",
+      "git_sha": "b1411e4a351e54925f2a2409c2666dcb14571c11"
+    },
+    {
+      "path": "智能骨骼裁切AI/历史版本/原仓库基线-2026-10-26/版本升级说明.md",
+      "git_sha": "9321386353bb7a2467e64229ee83721181b6d3d2"
+    }
+  ]
+}
